@@ -18,5 +18,8 @@
     "phaser": "^3.90.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
-  }
+  },
+  "optionalDependencies": {
+  "@rollup/rollup-linux-x64-gnu": "4.21.0"
+}
 }
