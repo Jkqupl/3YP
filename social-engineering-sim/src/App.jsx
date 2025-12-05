@@ -1,14 +1,19 @@
-import React from "react"
-import PhaserGame from "./game/PhaserGame"
-
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import PhishingModule from "./pages/PhishingModule";
 
 export default function App() {
-return (
-<div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center">
-<h1 className="text-3xl mb-6 font-bold">Social Engineering Simulator</h1>
-<div className="w-[960px] h-[540px] border border-slate-700 rounded-lg overflow-hidden">
-<PhaserGame />
-</div>
-</div>
-)
+  return (
+    <Router>
+      <div className="min-h-screen bg-slate-600 flex items-center justify-center">
+        <div className="w-full max-w-6xl min-h-[90vh] border-2 border-gray-800 rounded-xl bg-white p-8">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/module/phishing" element={<PhishingModule />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
+  );
 }
