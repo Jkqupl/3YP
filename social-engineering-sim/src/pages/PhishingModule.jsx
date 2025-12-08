@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PhaserContainer from "../game/PhaserContainer";
-import PhishingScene from "../game/scenes/phishing/PhishingScene";
+import IntroScene from "../game/scenes/phishing/IntroScene";
 
 export default function PhishingModule() {
   const [play, setPlay] = useState(false);
@@ -37,7 +37,7 @@ export default function PhishingModule() {
 
       {play && (
         <div className="w-[960px] h-[540px] border border-slate-700 rounded-lg overflow-hidden">
-          <PhaserContainer scene={PhishingScene} />
+          <PhaserContainer scene={IntroScene} />
         </div>
       )}
     </div>

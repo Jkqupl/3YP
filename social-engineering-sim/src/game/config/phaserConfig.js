@@ -4,7 +4,7 @@ const commonConfig = {
   type: Phaser.AUTO,
   width: 960,
   height: 540,
-  backgroundColor: "#a7b7daff",
+  backgroundColor: "#dfe5f3ff",
   physics: {
     default: "arcade",
     arcade: {
