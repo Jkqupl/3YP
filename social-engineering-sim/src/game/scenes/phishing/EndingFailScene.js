@@ -14,7 +14,18 @@ export default class EndingFailScene extends Phaser.Scene {
 
     this.add.text(100, 300, GameState.failReason, {
       fontSize: "26px",
-      color: "#ffffff"
+      color: "#ffffff",
+      wordWrap: { width: 650 }
+    })
+
+    const retry = this.add.text(100, 380, "Retry", {
+      fontSize: "32px",
+      color: "#00ffea"
+    })
+    retry.setInteractive()
+    retry.on("pointerdown", () => {
+      GameState.reset()
+      this.scene.start("IntroScene")
     })
   }
 }

@@ -9,6 +9,8 @@ import FakeGmailScene from "./scenes/phishing/FakeGmailScene";
 import FakeAmazonScene from "./scenes/phishing/FakeAmazonScene";
 import DanceSiteScene from "./scenes/phishing/DanceSiteScene";
 import EndingFailScene from "./scenes/phishing/EndingFailScene";
+import EndingGoodScene from "./scenes/phishing/EndingGoodScene";
+import EndingPerfectScene from "./scenes/phishing/EndingPerfectScene";
 
 export default function PhaserContainer({ scene }) {
   const gameRef = useRef(null);
@@ -25,6 +27,8 @@ export default function PhaserContainer({ scene }) {
         FakeAmazonScene,
         DanceSiteScene,
         EndingFailScene,
+        EndingGoodScene,
+        EndingPerfectScene,
       ],
     };
 

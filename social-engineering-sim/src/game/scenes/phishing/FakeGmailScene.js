@@ -28,8 +28,11 @@ export default class FakeGmailScene extends Phaser.Scene {
     })
     back.setInteractive()
     back.on("pointerdown", () => {
-      GameState.handledGmailSafely = true
-      GameState.day = 2
+      GameState.gmailResolvedSafely = true
+      // Optionally remove the Gmail alert from the inbox
+      GameState.inbox[1] = GameState.inbox[1].filter(
+        e => e.id !== "gmail"
+      )
       this.scene.start("InboxScene")
     })
   }

@@ -7,6 +7,17 @@ export default class InboxScene extends Phaser.Scene {
   }
 
   create() {
+    // Progress from day 1 to day 2 only after both day 1 emails are dealt with
+    if (GameState.day === 1) {
+      const danceDealtWith =
+        GameState.danceLegitVisited || GameState.danceDeleted
+      const gmailDealtWith = GameState.gmailResolvedSafely
+
+      if (danceDealtWith && gmailDealtWith) {
+        GameState.day = 2
+      }
+    }
+
     const day = GameState.day
 
     this.add.text(40, 40, `Inbox - Day ${day}`, {
@@ -14,7 +25,7 @@ export default class InboxScene extends Phaser.Scene {
       color: "#ffffff"
     })
 
-    const emails = this.getEmailListForDay(day)
+    const emails = GameState.inbox[day] || []
 
     let y = 140
     emails.forEach(email => {
@@ -28,18 +39,23 @@ export default class InboxScene extends Phaser.Scene {
       })
       y += 50
     })
-  }
 
-  getEmailListForDay(day) {
-    if (day === 1) {
-      return [
-        { id: "dance", subject: "Dance Competition Registration", type: "legit" },
-        { id: "gmail", subject: "Unusual Sign in Attempt", type: "phish" }
-      ]
+    // Check for good or perfect endings on day 2 after Amazon is handled safely
+    if (day === 2 && GameState.amazonResolvedSafely) {
+      // Perfect ending: user did NOT delete the dance email, used it legitimately,
+      // and handled both phishing emails safely
+      if (
+        GameState.danceLegitVisited &&
+        !GameState.danceDeleted &&
+        GameState.gmailResolvedSafely
+      ) {
+        return this.scene.start("EndingPerfectScene")
+      }
+
+      // Good ending: user deleted the dance email but still handled both phishing emails safely
+      if (GameState.danceDeleted && GameState.gmailResolvedSafely) {
+        return this.scene.start("EndingGoodScene")
+      }
     }
-
-    return [
-      { id: "amazon", subject: "Amazon Purchase Receipt", type: "phish" }
-    ]
   }
 }

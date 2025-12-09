@@ -1,5 +1,4 @@
 import Phaser from "phaser"
-import { GameState } from "./PhishingAssets"
 
 export default class IntroScene extends Phaser.Scene {
   constructor() {

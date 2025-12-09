@@ -26,8 +26,8 @@ export default class EmailScene extends Phaser.Scene {
     this.makeButton("View Link", 40, y, () => this.viewLink())
     y += 60
 
-    // ENTER CREDENTIALS (if present)
-    if (this.email.id !== "dance") {
+    // ENTER CREDENTIALS only for Gmail, not for Amazon
+    if (this.email.id === "gmail") {
       this.makeButton("Enter Credentials", 40, y, () => this.enterCredentials())
     }
   }
@@ -42,23 +42,30 @@ export default class EmailScene extends Phaser.Scene {
   }
 
   deleteEmail() {
+    const day = GameState.day
+
+    GameState.inbox[day] = GameState.inbox[day].filter(
+      e => e.id !== this.email.id
+    )
+
     if (this.email.id === "dance") {
-      GameState.handledDanceEmail = false
-    }
-    if (this.email.id === "gmail") {
-      GameState.handledGmailSafely = true
-      GameState.day = 2
-    }
-    if (this.email.id === "amazon") {
-      GameState.handledAmazonSafely = true
+      GameState.danceDeleted = true
     }
 
-    return this.scene.start("InboxScene")
+    if (this.email.id === "gmail") {
+      GameState.gmailResolvedSafely = true
+    }
+
+    if (this.email.id === "amazon") {
+      GameState.amazonResolvedSafely = true
+    }
+
+    this.scene.start("InboxScene")
   }
 
   viewLink() {
     if (this.email.id === "dance") {
-      GameState.handledDanceEmail = true
+      GameState.danceLegitVisited = true
       return this.scene.start("DanceSiteScene")
     }
     if (this.email.id === "gmail") {
@@ -70,7 +77,7 @@ export default class EmailScene extends Phaser.Scene {
   }
 
   enterCredentials() {
-    GameState.failReason = "Credentials stolen"
+    GameState.failReason = "Credentials stolen at Gmail step"
     this.scene.start("EndingFailScene")
   }
 }
