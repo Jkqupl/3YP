@@ -14,7 +14,7 @@ export const useGameStore = create((set, get) => ({
   day: 1,
   inbox: initialInbox(),
   currentEmailId: null,
-  simulationMode: null, // "gmail" | "amazon" | null
+  simulationMode: null, // "gmail" | "amazon" | "dance" | null
 
   // flags
   danceLegitVisited: false,
@@ -59,18 +59,19 @@ export const useGameStore = create((set, get) => ({
     get().maybeSetEnding()
   },
 
-  handleDanceLegit() {
-    const { inbox } = get()
-    const newInbox = { ...inbox }
-    newInbox[1] = (newInbox[1] || []).filter(e => e.id !== "dance")
+ setDanceVisited() {
+  const { inbox } = get()
+  const newInbox = { ...inbox }
+  newInbox[1] = (newInbox[1] || []).filter(e => e.id !== "dance")
 
-    set({
-      inbox: newInbox,
-      danceLegitVisited: true
-    })
+  set({
+    inbox: newInbox,
+    danceLegitVisited: true
+  })
 
-    get().maybeAdvanceDay()
-  },
+  get().maybeAdvanceDay()
+},
+
 
   handleGmailSafe() {
     const { inbox } = get()

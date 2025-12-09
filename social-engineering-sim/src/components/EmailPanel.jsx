@@ -20,8 +20,9 @@ export default function EmailPanel() {
       <div className="h-full bg-slate-900/80 border border-cyan-700 rounded-lg flex flex-col overflow-hidden">
         <div className="px-3 py-2 border-b border-cyan-700 bg-slate-950/80">
           <p className="text-xs uppercase tracking-wide text-cyan-400">
-            Simulation -{" "}
-            {simulationMode === "gmail" ? "Gmail login" : "Amazon receipt"}
+            Simulation - {simulationMode === "gmail" && "Gmail login"}
+            {simulationMode === "amazon" && "Amazon receipt"}
+            {simulationMode === "dance" && "Dance registration"}
           </p>
         </div>
 
@@ -58,14 +59,6 @@ export default function EmailPanel() {
               {email.type === "phish" ? "Potential phishing" : "Legitimate"}
             </p>
 
-            {/* Email body text */}
-            {email.id === "dance" && (
-              <p className="text-sm text-slate-200 max-w-xl">
-                Invitation to register for the dance competition. This is
-                legitimate and safe.
-              </p>
-            )}
-
             {email.id === "gmail" && (
               <p className="text-sm text-slate-200 max-w-xl">
                 The security alert may lead to a fake login page designed to
@@ -89,12 +82,13 @@ export default function EmailPanel() {
                 Delete email
               </button>
 
+              {/* Email body text */}
               {email.id === "dance" && (
                 <button
-                  onClick={handleDanceLegit}
+                  onClick={() => startSimulation("dance")}
                   className="px-3 py-1.5 text-xs rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold"
                 >
-                  Open registration safely
+                  View registration link
                 </button>
               )}
 

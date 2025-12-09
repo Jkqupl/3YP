@@ -10,7 +10,7 @@ export default function ModuleCard({ title, description, link }) {
       <div className="w-24 h-24 rounded-full bg-blue-600 flex items-center justify-center text-xl font-bold">
         {title.charAt(0)}
       </div>
-      <h2 className="text-xl font-semibold">{title}</h2>
+      <h2 className="text-xl font-semibold text-cyan-300">{title}</h2>
       <p className="text-sm text-slate-400">{description}</p>
     </Link>
   );
