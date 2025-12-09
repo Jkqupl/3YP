@@ -17,7 +17,7 @@ export default function EmailPanel() {
 
   if (simulationMode) {
     return (
-      <div className="h-full bg-slate-900/80 border border-cyan-700 rounded-lg overflow-hidden flex flex-col">
+      <div className="h-full bg-slate-900/80 border border-cyan-700 rounded-lg flex flex-col overflow-hidden">
         <div className="px-3 py-2 border-b border-cyan-700 bg-slate-950/80">
           <p className="text-xs uppercase tracking-wide text-cyan-400">
             Simulation -{" "}
@@ -25,8 +25,10 @@ export default function EmailPanel() {
           </p>
         </div>
 
-        <div className="flex-1">
-          <PhaserSimulation mode={simulationMode} />
+        <div className="w-full h-full min-h-[320px] flex items-center justify-center">
+          <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+            <PhaserSimulation mode={simulationMode} />
+          </div>
         </div>
       </div>
     );

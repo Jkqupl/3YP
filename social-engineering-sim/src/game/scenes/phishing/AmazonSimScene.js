@@ -7,37 +7,86 @@ export class AmazonSimScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.text(40, 40, "Amazon receipt details", {
-      fontSize: "24px",
-      color: "#ffdd99"
-    })
+    const w = this.scale.width
+    const h = this.scale.height
+    const scaleFactor = h / 360
 
+    // Background panel
+    const panel = this.add.rectangle(
+      w / 2,
+      h / 2,
+      w * 0.94,
+      h * 0.94,
+      0x1e293b,
+      0.95
+    )
+    panel.setStrokeStyle(2, 0xfbbf24)
+
+    // Title
     this.add.text(
-      40,
-      80,
-      "Order: Wireless headphones\nOrder number: #ABCD-1235 (your last real order ended in 1234)",
+      w * 0.05,
+      h * 0.08,
+      "Amazon receipt details",
       {
-        fontSize: "18px",
-        color: "#ffffff"
+        fontFamily: "Arial",
+        fontSize: 28 * scaleFactor,
+        color: "#fbbf24"
       }
     )
 
-    const download = this.add.text(40, 150, "Download receipt PDF (unsafe)", {
-      fontSize: "20px",
-      color: "#ff4444"
-    })
-    download.setInteractive()
-    download.on("pointerdown", () => {
-      const setFail = useGameStore.getState().setFail
-      setFail("You downloaded a fake receipt that installed malware on your device.")
+    // Description
+    this.add.text(
+      w * 0.05,
+      h * 0.20,
+      "Order: Wireless headphones\nOrder number: #ABCD-1235\nYour actual last order: #ABCD-1234",
+      {
+        fontFamily: "Arial",
+        fontSize: 16 * scaleFactor,
+        color: "#e2e8f0"
+      }
+    )
+
+    // Unsafe button
+    const unsafe = this.add.text(
+      w * 0.05,
+      h * 0.45,
+      "Download receipt PDF (unsafe)",
+      {
+        fontFamily: "Arial",
+        fontSize: 20 * scaleFactor,
+        backgroundColor: "#f87171",
+        color: "#0f172a",
+        padding: {
+          x: 8 * scaleFactor,
+          y: 6 * scaleFactor
+        }
+      }
+    )
+    unsafe.setInteractive()
+    unsafe.on("pointerdown", () => {
+      useGameStore.getState().setFail(
+        "Malware installed from fake receipt PDF."
+      )
     })
 
-    const deleteSafe = this.add.text(40, 200, "Delete email after spotting mismatch", {
-      fontSize: "20px",
-      color: "#00ffea"
-    })
-    deleteSafe.setInteractive()
-    deleteSafe.on("pointerdown", () => {
+    // Safe button
+    const safe = this.add.text(
+      w * 0.05,
+      h * 0.65,
+      "Delete email (mismatch detected)",
+      {
+        fontFamily: "Arial",
+        fontSize: 20 * scaleFactor,
+        backgroundColor: "#34d399",
+        color: "#0f172a",
+        padding: {
+          x: 8 * scaleFactor,
+          y: 6 * scaleFactor
+        }
+      }
+    )
+    safe.setInteractive()
+    safe.on("pointerdown", () => {
       const { handleAmazonSafe, endSimulation } = useGameStore.getState()
       handleAmazonSafe()
       endSimulation()
