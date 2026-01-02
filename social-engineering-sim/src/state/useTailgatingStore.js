@@ -1,194 +1,103 @@
 import { create } from "zustand";
 
-/*
-Tailgating game state model
-
-Design goals:
-- Persistent meters across encounters
-- Deterministic endings
-- Clear Phaser -> store API
-- No UI or asset assumptions
-*/
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
 export const useTailgatingStore = create((set, get) => ({
-  /* -------------------------
-     Core progression
-  ------------------------- */
-  encounterIndex: 0, // 0 to 4
+  // Progress
+  encounterIndex: 0,
   totalEncounters: 5,
 
-  /* -------------------------
-     Meters
-  ------------------------- */
-  socialPressure: 0, // 0 to 100
-  securityRisk: 0,   // 0 to 100
+  // Meters
+  socialPressure: 0,
+  maxPressure: 0,
+  securityRisk: 0,
 
-  /* -------------------------
-     Outcome tracking
-  ------------------------- */
+  // Outcomes
   breachOccurred: false,
   ending: null, // "perfect" | "good" | "fail"
 
-  /* -------------------------
-     Feedback / logging
-  ------------------------- */
-  incidents: [], // array of { encounter, type, message }
+  // Optional logging
+  incidents: [], // { encounter, type, message }
 
-  /* -------------------------
-     Configuration
-  ------------------------- */
-  limits: {
-    maxPressure: 100,
-    maxRisk: 100,
-    pressureWarning: 70,
-    riskWarning: 60,
+  // Config thresholds (tune later)
+  thresholds: {
+    perfectRiskMax: 20,
+    perfectMaxPressureMax: 60,
   },
 
-  /* -------------------------
-     Reset
-  ------------------------- */
   resetGame: () =>
     set({
       encounterIndex: 0,
       socialPressure: 0,
+      maxPressure: 0,
       securityRisk: 0,
       breachOccurred: false,
       ending: null,
       incidents: [],
     }),
 
-  /* -------------------------
-     Encounter flow
-  ------------------------- */
-  startNextEncounter: () => {
-    const { encounterIndex, totalEncounters, ending } = get();
-    if (ending) return;
-    if (encounterIndex < totalEncounters - 1) {
-      set({ encounterIndex: encounterIndex + 1 });
-    } else {
-      get().evaluateEnding();
-    }
+  setEncounterIndex: (index) => {
+    const t = get().totalEncounters;
+    set({ encounterIndex: clamp(index, 0, Math.max(0, t - 1)) });
   },
 
-  /* -------------------------
-     Pressure logic
-  ------------------------- */
-  increasePressure: (amount, reason = "") =>
+  // Generic meter update used by the Phaser scene
+  applyDeltas: ({ pressureDelta = 0, riskDelta = 0, incident = null }) =>
     set((state) => {
-      const newValue = Math.min(
-        state.socialPressure + amount,
-        state.limits.maxPressure
-      );
+      const socialPressure = clamp(state.socialPressure + pressureDelta, 0, 100);
+      const securityRisk = clamp(state.securityRisk + riskDelta, 0, 100);
+      const maxPressure = Math.max(state.maxPressure, socialPressure);
 
       return {
-        socialPressure: newValue,
-        incidents: reason
-          ? [
-              ...state.incidents,
-              {
-                encounter: state.encounterIndex,
-                type: "pressure",
-                message: reason,
-              },
-            ]
-          : state.incidents,
+        socialPressure,
+        securityRisk,
+        maxPressure,
+        incidents: incident ? [...state.incidents, incident] : state.incidents,
       };
     }),
 
-  reducePressure: (amount) =>
+  setPressure: (value, incident = null) =>
+    set((state) => {
+      const socialPressure = clamp(value, 0, 100);
+      return {
+        socialPressure,
+        maxPressure: Math.max(state.maxPressure, socialPressure),
+        incidents: incident ? [...state.incidents, incident] : state.incidents,
+      };
+    }),
+
+  setRisk: (value, incident = null) =>
     set((state) => ({
-      socialPressure: Math.max(state.socialPressure - amount, 0),
+      securityRisk: clamp(value, 0, 100),
+      incidents: incident ? [...state.incidents, incident] : state.incidents,
     })),
 
-  /* -------------------------
-     Risk logic
-  ------------------------- */
-  increaseRisk: (amount, reason = "") =>
-    set((state) => {
-      const newValue = Math.min(
-        state.securityRisk + amount,
-        state.limits.maxRisk
-      );
-
-      return {
-        securityRisk: newValue,
-        incidents: reason
-          ? [
-              ...state.incidents,
-              {
-                encounter: state.encounterIndex,
-                type: "risk",
-                message: reason,
-              },
-            ]
-          : state.incidents,
-      };
-    }),
-
-  /* -------------------------
-     Player decisions
-  ------------------------- */
-  letLegitimateResidentIn: () => {
-    get().increaseRisk(
-      5,
-      "A resident entered without using the access system."
-    );
-    get().startNextEncounter();
-  },
-
-  redirectToKeyFob: () => {
-    get().reducePressure(5);
-    get().startNextEncounter();
-  },
-
-  waitSilently: () => {
-    get().increasePressure(
-      8,
-      "Waiting increased social pressure."
-    );
-    get().startNextEncounter();
-  },
-
-  askQuestion: () => {
-    get().reducePressure(3);
-    get().startNextEncounter();
-  },
-
-  useIntercom: () => {
-    get().reducePressure(8);
-    get().startNextEncounter();
-  },
-
-  /* -------------------------
-     Attacker handling
-  ------------------------- */
-  letAttackerIn: () => {
-    set({
+  // Fail state
+  setFail: (message = "An unauthorised person gained access.") =>
+    set((state) => ({
       breachOccurred: true,
       ending: "fail",
-    });
-  },
+      incidents: [
+        ...state.incidents,
+        { encounter: state.encounterIndex, type: "breach", message },
+      ],
+    })),
 
-  safelyRefuseEntry: () => {
-    get().reducePressure(10);
-    get().startNextEncounter();
-  },
-
-  /* -------------------------
-     Ending evaluation
-  ------------------------- */
+  // Ending uses BOTH risk and maxPressure now
   evaluateEnding: () => {
-    const { breachOccurred, securityRisk } = get();
+    const { breachOccurred, securityRisk, maxPressure, thresholds } = get();
 
     if (breachOccurred) {
       set({ ending: "fail" });
-      return;
+      return "fail";
     }
 
-    if (securityRisk < 40) {
-      set({ ending: "perfect" });
-    } else {
-      set({ ending: "good" });
-    }
+    const perfect =
+      securityRisk <= thresholds.perfectRiskMax &&
+      maxPressure <= thresholds.perfectMaxPressureMax;
+
+    const ending = perfect ? "perfect" : "good";
+    set({ ending });
+    return ending;
   },
 }));

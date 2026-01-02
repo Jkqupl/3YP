@@ -17,10 +17,10 @@ Assets:
 
 const ENCOUNTERS = [
   {
-    key: "legit_baseline",
-    title: "Encounter 1: Legitimate resident",
-    subtitle: "They use their own key fob. No decision needed.",
-    type: "auto",
+    key: "neighbour",
+    title: "Encounter 1: Neighbour",
+    subtitle: "\"Hey, can you let me in? I forgot my fob.\"",
+    type: "decision_neighbour",
   },
   {
     key: "parcel",
@@ -62,6 +62,16 @@ export default class TailgatingScene extends Phaser.Scene {
     this.zoneDoor = null;
     this.zoneQueue = null;
 
+    this.endingObjects = [];
+    this.restartKeyHandler = null;
+
+    this.advanceTimer = null;
+    this.txtFeedback = null;
+
+    this.awaitingContinue = false;
+    this.canContinueAt = 0;
+    this.onContinueHandler = null;
+
     this.lastDirection = "front";
   }
 
@@ -73,9 +83,76 @@ export default class TailgatingScene extends Phaser.Scene {
 
     this.createWorld(width, height);
     this.createHUD(width, height);
-
+    this.scale.on("resize", () => this.relayout());
     this.startEncounter();
+    this.onContinueHandler = () => {
+      const store = useTailgatingStore.getState();
+      if (store.ending) return;
+      if (!this.awaitingContinue) return;
+      if (Date.now() < this.canContinueAt) return;
+      this.awaitingContinue = false;
+      this.advanceEncounter();
+    };
+
+    this.input.on("pointerdown", this.onContinueHandler);
+
+    this.input.keyboard.on("keydown-SPACE", this.onContinueHandler);
+    this.input.keyboard.on("keydown-ENTER", this.onContinueHandler);
+
   }
+
+
+  relayout() {
+  const { width, height } = this.scale;
+
+  // Resize HUD background
+  // hudBg is local right now, so store it on this so we can update width
+  // If you keep it local, skip this part.
+  if (useTailgatingStore.getState().ending) return;
+
+  if (this.hudBg) {
+    this.hudBg.setPosition(width / 2, 34);
+    this.hudBg.width = width;
+  }
+
+  // Dialogue panel positions
+  const panelW = Math.min(640, width * 0.86);
+  this.dialogPanel.setPosition(width / 2, height - 110);
+  this.dialogPanel.width = panelW;
+
+  this.txtDialogTitle.setPosition(width / 2 - panelW / 2 + 14, height - 160);
+  this.txtDialogBody.setPosition(width / 2 - panelW / 2 + 14, height - 138);
+  this.txtDialogBody.setWordWrapWidth(panelW - 28);
+
+  this.txtFeedback.setPosition(width / 2 - panelW / 2 + 14, height - 94);
+  this.txtFeedback.setWordWrapWidth(panelW - 28);
+
+ // Meter labels and bars
+  const barW = 200;
+  const barLeftX = width - 270;
+  const barCenterX = barLeftX + barW / 2;
+  const labelGap = 12;
+
+  this.pressureBarBg.setPosition(barCenterX, 20);
+  this.pressureBarFill.setPosition(barLeftX, 20);
+
+  this.riskBarBg.setPosition(barCenterX, 44);
+  this.riskBarFill.setPosition(barLeftX, 44);
+
+  const labelX = barLeftX - labelGap;
+  this.txtPressure.setPosition(labelX, 12);
+  this.txtRisk.setPosition(labelX, 36);
+
+
+  // Re render choices for current encounter type
+  const idx = useTailgatingStore.getState().encounterIndex;
+  const encounter = ENCOUNTERS[idx];
+  if (encounter && encounter.type !== "auto") {
+    this.renderChoices(this.getChoicesForEncounter(encounter.type));
+  }
+
+  this.refreshMeters();
+}
 
   /* -----------------------
      WORLD (placeholder)
@@ -147,8 +224,9 @@ export default class TailgatingScene extends Phaser.Scene {
     this.ui = this.add.container(0, 0);
 
     // Top HUD background
-    const hudBg = this.add.rectangle(width / 2, 34, width, 68, 0x0b0f14, 0.9);
-    this.ui.add(hudBg);
+    this.hudBg = this.add.rectangle(width / 2, 34, width, 68, 0x0b0f14, 0.9);
+    this.ui.add(this.hudBg);
+
 
     this.txtTitle = this.add.text(16, 10, "Tailgating Simulation", {
       fontFamily: "system-ui, Arial",
@@ -162,6 +240,7 @@ export default class TailgatingScene extends Phaser.Scene {
       color: "#c9d7ee",
     });
 
+    
     this.ui.add(this.txtTitle);
     this.ui.add(this.txtEncounter);
 
@@ -176,23 +255,43 @@ export default class TailgatingScene extends Phaser.Scene {
       fontSize: "12px",
       color: "#c9d7ee",
     });
+    this.txtPressure.setOrigin(1, 0);
+    this.txtRisk.setOrigin(1, 0);
+
 
     this.ui.add(this.txtPressure);
     this.ui.add(this.txtRisk);
 
     // Meter bars (placeholder rectangles)
-    this.pressureBarBg = this.add.rectangle(width - 170, 20, 200, 10, 0x1d2a3a);
-    this.pressureBarFill = this.add.rectangle(width - 270, 20, 0, 10, 0xffc14d);
+    this.pressureBarBg = this.add.rectangle(0, 0, 200, 10, 0x1d2a3a);
+    this.pressureBarFill = this.add.rectangle(0, 0, 0, 10, 0xffc14d);
     this.pressureBarFill.setOrigin(0, 0.5);
 
-    this.riskBarBg = this.add.rectangle(width - 170, 44, 200, 10, 0x1d2a3a);
-    this.riskBarFill = this.add.rectangle(width - 270, 44, 0, 10, 0xff6b6b);
+    this.riskBarBg = this.add.rectangle(0, 0, 200, 10, 0x1d2a3a);
+    this.riskBarFill = this.add.rectangle(0, 0, 0, 10, 0xff6b6b);
     this.riskBarFill.setOrigin(0, 0.5);
 
     this.ui.add(this.pressureBarBg);
     this.ui.add(this.pressureBarFill);
     this.ui.add(this.riskBarBg);
     this.ui.add(this.riskBarFill);
+
+    // Meter labels and bars
+    const barW = 200;
+    const barLeftX = width - 270;          // where fill starts (origin 0)
+    const barCenterX = barLeftX + barW / 2;
+    const labelGap = 12;
+
+    this.pressureBarBg.setPosition(barCenterX, 20);
+    this.pressureBarFill.setPosition(barLeftX, 20);
+
+    this.riskBarBg.setPosition(barCenterX, 44);
+    this.riskBarFill.setPosition(barLeftX, 44);
+
+    // labels sit to the left of the bar, right aligned
+    const labelX = barLeftX - labelGap;
+    this.txtPressure.setPosition(labelX, 12);
+    this.txtRisk.setPosition(labelX, 36);
 
     // Dialogue panel
     const panelW = Math.min(640, width * 0.86);
@@ -213,10 +312,18 @@ export default class TailgatingScene extends Phaser.Scene {
       color: "#c9d7ee",
       wordWrap: { width: panelW - 28 },
     });
+    this.txtFeedback = this.add.text(width / 2 - panelW / 2 + 14, height - 94, "", {
+      fontFamily: "system-ui, Arial",
+      fontSize: "12px",
+      color: "#9fb6cf",
+      wordWrap: { width: panelW - 28 },
+    });
 
     this.ui.add(this.dialogPanel);
     this.ui.add(this.txtDialogTitle);
     this.ui.add(this.txtDialogBody);
+    this.ui.add(this.txtFeedback);
+
 
     // Container for buttons
     this.choiceContainer = this.add.container(0, 0);
@@ -240,45 +347,23 @@ export default class TailgatingScene extends Phaser.Scene {
     this.txtEncounter.setText(`${idx + 1}/${store.totalEncounters}: ${encounter.key}`);
     this.txtDialogTitle.setText(encounter.title);
     this.txtDialogBody.setText(encounter.subtitle);
+    this.txtFeedback.setText("");
+
 
     // Reset NPC position for the encounter
     this.resetNPC();
-
-    if (encounter.type === "auto") {
-      // Baseline: no decision. Advance after a short moment.
-      this.time.delayedCall(1200, () => {
-        useTailgatingStore.getState().startNextEncounter();
-        this.onStoreAdvanced();
-      });
-      return;
-    }
-
+  
     // Start pressure rising as NPC approaches and waits.
+  
     this.startPressureTimer(encounter.type);
+    
+
 
     // Present choices based on encounter type
     const choices = this.getChoicesForEncounter(encounter.type);
     this.renderChoices(choices);
   }
 
-  onStoreAdvanced() {
-    const { ending, encounterIndex, totalEncounters } = useTailgatingStore.getState();
-
-    if (ending) {
-      this.showEnding(ending);
-      return;
-    }
-
-    if (encounterIndex >= totalEncounters) {
-      // Defensive, should not happen, but safe.
-      useTailgatingStore.getState().evaluateEnding();
-      this.showEnding(useTailgatingStore.getState().ending ?? "good");
-      return;
-    }
-
-    this.refreshMeters();
-    this.startEncounter();
-  }
 
   /* -----------------------
      NPC placeholder movement + pressure
@@ -291,33 +376,45 @@ export default class TailgatingScene extends Phaser.Scene {
   }
 
   startPressureTimer(type) {
-    // Base pressure rate differs by encounter.
-    const base = type.includes("attacker_clear") ? 5 : type.includes("attacker") ? 3 : 2;
+  // Base pressure rate differs by encounter.
+  // Neighbour should move, but not add pressure.
+  const addsPressure = type !== "decision_neighbour";
+  const base = type.includes("attacker_clear") ? 5 : type.includes("attacker") ? 3 : 2;
 
-    // NPC walks toward queue zone, then "waits".
-    this.npc.body.setVelocity(0, -40);
+  // Increase NPC speed
+  this.npc.body.setVelocity(0, -120);
 
-    this.pressureTimer = this.time.addEvent({
-      delay: 800,
-      loop: true,
-      callback: () => {
-        const store = useTailgatingStore.getState();
-        if (store.ending) return;
+  this.pressureTimer = this.time.addEvent({
+    delay: 300,
+    loop: true,
+    callback: () => {
+      const store = useTailgatingStore.getState();
+      if (store.ending) return;
 
-        // Check if NPC is within the queue zone area.
-        const inQueue = this.isInZone(this.npc.x, this.npc.y, this.zoneQueue);
-        if (inQueue) {
-          store.increasePressure(base, "NPC waiting behind you.");
-          this.refreshMeters();
-        }
+      const inQueue = this.isInZone(this.npc.x, this.npc.y, this.zoneQueue);
 
+      if (inQueue) {
         // Stop NPC when it reaches queue zone (simple clamp)
         if (this.npc.y <= this.zoneQueue.y + this.zoneQueue.h / 4) {
           this.npc.body.setVelocity(0, 0);
         }
-      },
-    });
-  }
+
+        if (addsPressure) {
+          store.applyDeltas({
+            pressureDelta: base,
+            riskDelta: 0,
+            incident: {
+              encounter: store.encounterIndex,
+              type: "pressure",
+              message: "NPC waiting behind you.",
+            },
+          });
+          this.refreshMeters();
+        }
+      }
+    },
+  });
+}
 
   stopPressureTimer() {
     if (this.pressureTimer) {
@@ -333,81 +430,295 @@ export default class TailgatingScene extends Phaser.Scene {
     // Each choice entry: { label, action }
     const store = useTailgatingStore.getState();
 
+    if (type === "decision_neighbour") {
+      return [
+        { label: "Hold door open", actionKey: "HOLD_DOOR" },
+        { label: "Point to key fob reader", actionKey: "REDIRECT_FOB" },
+        { label: "Use intercom", actionKey: "USE_INTERCOM" },
+        { label: "Ask a brief question", actionKey: "ASK_QUESTION" },
+      ];
+    }
+
     if (type === "decision_parcel") {
       return [
-        { label: "Hold door open", action: () => store.letLegitimateResidentIn() },
-        { label: "Point to key fob reader", action: () => store.redirectToKeyFob() },
-        { label: "Wait silently", action: () => store.waitSilently() },
-        { label: "Ask a brief question", action: () => store.askQuestion() },
+        { label: "Hold door open", actionKey: "HOLD_DOOR" },
+        { label: "Point to key fob reader", actionKey: "REDIRECT_FOB" },
+        { label: "Wait silently", actionKey: "WAIT_SILENT" },
+        { label: "Ask a brief question", actionKey: "ASK_QUESTION" },
       ];
     }
 
     if (type === "decision_ambiguous") {
       return [
-        { label: "Ask a question", action: () => store.askQuestion() },
-        { label: "Wait and observe", action: () => store.waitSilently() },
-        { label: "Redirect to key fob", action: () => store.redirectToKeyFob() },
-        { label: "Use intercom", action: () => store.useIntercom() },
-        { label: "Hold door open", action: () => store.letLegitimateResidentIn() },
+        { label: "Ask a question", actionKey: "ASK_QUESTION" },
+        { label: "Wait and observe", actionKey: "WAIT_SILENT" },
+        { label: "Redirect to key fob", actionKey: "REDIRECT_FOB" },
+        { label: "Use intercom", actionKey: "USE_INTERCOM" },
+        { label: "Hold door open", actionKey: "HOLD_DOOR" },
       ];
     }
 
+
     if (type === "decision_attacker_clear") {
       return [
-        { label: "Let them in quickly", action: () => store.letAttackerIn() },
-        { label: "Refuse and redirect to building process", action: () => store.safelyRefuseEntry() },
-        { label: "Use intercom", action: () => store.useIntercom() },
+        { label: "Let them in quickly", actionKey: "LET_IN" },
+        { label: "Refuse and redirect to process", actionKey: "REFUSE" },
+        { label: "Use intercom", actionKey: "USE_INTERCOM" },
       ];
     }
 
     // advanced attacker: harder judgement. For now still deterministic by action.
     return [
-      { label: "Hold door open", action: () => store.letAttackerIn() },
-      { label: "Ask a question", action: () => store.askQuestion() },
-      { label: "Redirect to key fob", action: () => store.redirectToKeyFob() },
-      { label: "Use intercom", action: () => store.useIntercom() },
+      { label: "Hold door open", actionKey: "HOLD_DOOR" },
+      { label: "Ask a question", actionKey: "ASK_QUESTION" },
+      { label: "Redirect to key fob", actionKey: "REDIRECT_FOB" },
+      { label: "Use intercom", actionKey: "USE_INTERCOM" },
     ];
+  
   }
 
-  renderChoices(choices) {
-    this.clearChoices();
+  /* -----------------------
+      outcomes for decisions
+  ------------------------ */
+  getOutcome(encounterType, actionKey) {
+  const store = useTailgatingStore.getState();
 
-    const { width, height } = this.scale;
+  // Defaults
+  let pressureDelta = 0;
+  let riskDelta = 0;
+  let response = "";
+  let feedback = "";
+  let fail = false;
 
-    const startX = 40;
-    const startY = height - 90;
-    const btnW = Math.min(260, width - 80);
-    const btnH = 34;
-    const gap = 10;
+  // Helper: pressure feels worse when already high
+  const pressureBonus = store.socialPressure >= 60 ? 2 : 0;
 
-    choices.forEach((c, i) => {
-      const y = startY + i * (btnH + gap);
+  if (encounterType === "decision_neighbour") {
+    if (actionKey === "HOLD_DOOR") {
+      riskDelta = 5;
+      response = "Neighbour slips in without authenticating.";
+      feedback = "Even for neighbours, bypassing access controls increases long term risk.";
+    } else if (actionKey === "REDIRECT_FOB") {
+      pressureDelta = 3 + pressureBonus;
+      response = "\"Oh right... I'll buzz my partner.\"";
+      feedback = "Redirecting to the key fob keeps the building secure.";
+    } else if (actionKey === "USE_INTERCOM") {
+      response = "You suggest using the intercom.";
+      feedback = "Using the building process reduces risk without escalating the situation.";
+      pressureDelta = -6;
+    } else if (actionKey === "ASK_QUESTION") {
+      response = "\"Which floor are you on?\" They hesitate slightly.";
+      feedback = "Simple questions buy time and surface inconsistencies.";
+      pressureDelta = -3;
+    }
+  }
 
-      const btn = this.add.rectangle(startX, y, btnW, btnH, 0x223044, 0.95);
-      btn.setOrigin(0, 0.5);
-      btn.setStrokeStyle(2, 0x355170);
-      btn.setInteractive({ useHandCursor: true });
+  if (encounterType === "decision_parcel") {
+    if (actionKey === "HOLD_DOOR") {
+      riskDelta = 5;
+      response = "They enter while you hold the door.";
+      feedback = "Common excuse. Encourage them to authenticate instead.";
+    } else if (actionKey === "REDIRECT_FOB") {
+      response = "They shift the parcel and tap their fob.";
+      feedback = "Waiting and redirecting keeps risk low.";
+      pressureDelta = 4 + pressureBonus;
+    } else if (actionKey === "WAIT_SILENT") {
+      response = "You wait. They eventually use the reader.";
+      feedback = "Waiting gives people space to authenticate themselves.";
+      pressureDelta = 8 + pressureBonus;
+    } else if (actionKey === "ASK_QUESTION") {
+      response = "\"Can you use your fob?\" They nod and do so.";
+      feedback = "Clear, calm prompts reduce both pressure and risk.";
+      pressureDelta = -2;
+    }
+  }
 
-      const txt = this.add.text(startX + 12, y - 9, c.label, {
-        fontFamily: "system-ui, Arial",
-        fontSize: "13px",
-        color: "#e6eefc",
-      });
+  if (encounterType === "decision_ambiguous") {
+    if (actionKey === "HOLD_DOOR") {
+      riskDelta = 10;
+      response = "They enter quickly without showing a fob.";
+      feedback = "Letting someone in without authentication increases risk significantly.";
+    } else if (actionKey === "REDIRECT_FOB") {
+      response = "\"I left it upstairs...\"";
+      feedback = "No fob is a warning sign. Use intercom or refuse.";
+      pressureDelta = 6 + pressureBonus;
+    } else if (actionKey === "USE_INTERCOM") {
+      response = "Intercom verification fails. They look annoyed.";
+      feedback = "Verification protects you when someone cannot authenticate.";
+      pressureDelta = 4;
+    } else if (actionKey === "ASK_QUESTION") {
+      response = "\"Uh, second floor.\" They avoid eye contact.";
+      feedback = "Inconsistency is a signal. Do not compensate by holding the door.";
+      pressureDelta = 2;
+    } else if (actionKey === "WAIT_SILENT") {
+      response = "They linger behind you.";
+      feedback = "Waiting can increase pressure. Use a clear process instead.";
+      pressureDelta = 10 + pressureBonus;
+    }
+  }
 
-      btn.on("pointerover", () => btn.setFillStyle(0x2a3e56, 1));
-      btn.on("pointerout", () => btn.setFillStyle(0x223044, 0.95));
-      btn.on("pointerdown", () => {
-        // Execute store action then advance UI.
-        c.action();
-        this.onStoreAdvanced();
-      });
+  if (encounterType === "decision_attacker_clear") {
+    if (actionKey === "LET_IN") {
+      fail = true;
+      response = "They rush in immediately.";
+      feedback = "Urgency is commonly used to force mistakes.";
+    } else if (actionKey === "REFUSE") {
+      response = "You refuse and point to the proper process.";
+      feedback = "Refusing under pressure keeps everyone safe.";
+      pressureDelta = -6;
+    } else if (actionKey === "USE_INTERCOM") {
+      response = "Intercom check fails. They leave angrily.";
+      feedback = "Verification is safer than relying on someone’s story.";
+      pressureDelta = 2;
+    }
+  }
 
-      this.choiceContainer.add(btn);
-      this.choiceContainer.add(txt);
+  if (encounterType === "decision_attacker_advanced") {
+    if (actionKey === "HOLD_DOOR") {
+      fail = true;
+      response = "They enter calmly as if they belong.";
+      feedback = "Advanced tailgaters mimic normal behaviour to avoid suspicion.";
+    } else if (actionKey === "ASK_QUESTION") {
+      response = "They answer smoothly, but still do not authenticate.";
+      feedback = "Confidence is not proof. Require authentication.";
+      pressureDelta = 4 + pressureBonus;
+    } else if (actionKey === "REDIRECT_FOB") {
+      response = "\"Oh, I forgot it.\"";
+      feedback = "Consistent rules stop manipulation, even when they seem legitimate.";
+      pressureDelta = 5 + pressureBonus;
+    } else if (actionKey === "USE_INTERCOM") {
+      response = "Intercom verification fails. They back off.";
+      feedback = "Process beats persuasion. This prevents repeat attempts.";
+      pressureDelta = -4;
+    }
+  }
 
-      this.choiceButtons.push(btn, txt);
+  return { pressureDelta, riskDelta, response, feedback, fail };
+}
+
+/* -----------------------
+handle choice selection
+----------------------- */
+
+handleChoice(actionKey) {
+  
+  const idx = useTailgatingStore.getState().encounterIndex;
+  const encounter = ENCOUNTERS[idx];
+  const type = encounter.type;
+
+  const outcome = this.getOutcome(type, actionKey);
+  this.stopPressureTimer();
+
+
+  if (outcome.fail) {
+    useTailgatingStore.getState().setFail("An unauthorised person gained access.");
+    this.refreshMeters();
+    this.txtFeedback.setText(outcome.feedback || "");
+    this.txtDialogBody.setText(outcome.response || "");
+    this.showEnding("fail");
+    return;
+  }
+
+  // Apply meter changes
+  useTailgatingStore.getState().applyDeltas({
+    pressureDelta: outcome.pressureDelta,
+    riskDelta: outcome.riskDelta,
+    incident: {
+      encounter: idx,
+      type: "choice",
+      message: `${actionKey} (p${outcome.pressureDelta}, r${outcome.riskDelta})`,
+    },
+  });
+
+  this.refreshMeters();
+
+  // Show response and feedback instead of instantly skipping
+  if (outcome.response) this.txtDialogBody.setText(outcome.response);
+  this.txtFeedback.setText(outcome.feedback || "");
+
+  // Disable current choices while we show feedback
+  this.clearChoices();
+
+  // Keep feedback on screen until user continues
+this.awaitingContinue = true;
+this.canContinueAt = Date.now() + 1200; // prevents instant skip
+
+// Optional hint line
+this.txtFeedback.setText((outcome.feedback || "") + "\n\nClick or press Enter to continue");
+}
+
+
+ renderChoices(choices) {
+  this.clearChoices();
+
+  const { width, height } = this.scale;
+
+  // Define a left sidebar region
+  const sidebarX = 40;
+  const sidebarW = Math.min(360, Math.floor(width * 0.32)); // cap width so it stays a lane
+  const gapY = 10;
+
+  // Vertical lane: below HUD, above dialogue panel
+  const topSafeY = 90;
+
+  const panelH = 120;
+  const dialogCenterY = height - 110;
+  const dialogTopY = dialogCenterY - panelH / 2;
+
+  const laneBottomY = dialogTopY - 16; // small breathing room above dialog
+  const laneH = Math.max(80, laneBottomY - topSafeY);
+
+  // 1 column by default for sidebar
+  // if you want 2 columns inside the sidebar, set cols=2 when sidebarW is big enough
+  const cols = sidebarW >= 320 && choices.length >= 4 ? 2 : 1;
+  const gapX = 12;
+  const btnW = cols === 2 ? Math.floor((sidebarW - gapX) / 2) : sidebarW;
+
+  // Button sizing, shrink if needed
+  let btnH = 34;
+  const rows = Math.ceil(choices.length / cols);
+  const neededH = rows * btnH + (rows - 1) * gapY;
+
+  if (neededH > laneH) btnH = 30;
+
+  const gridH = rows * btnH + (rows - 1) * gapY;
+
+  // Anchor to bottom of the lane so it never climbs into the world
+  const startY = Math.max(topSafeY, laneBottomY - gridH);
+  const startX = sidebarX;
+
+  choices.forEach((c, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+
+    const x = startX + col * (btnW + gapX);
+    const y = startY + row * (btnH + gapY);
+
+    const btn = this.add.rectangle(x, y, btnW, btnH, 0x223044, 0.95);
+    btn.setOrigin(0, 0);
+    btn.setStrokeStyle(2, 0x355170);
+    btn.setInteractive({ useHandCursor: true });
+
+    const txt = this.add.text(x + 10, y + 8, c.label, {
+      fontFamily: "system-ui, Arial",
+      fontSize: "13px",
+      color: "#e6eefc",
+      wordWrap: { width: btnW - 20 },
     });
-  }
+
+    btn.on("pointerover", () => btn.setFillStyle(0x2a3e56, 1));
+    btn.on("pointerout", () => btn.setFillStyle(0x223044, 0.95));
+    btn.on("pointerdown", () => {
+      this.handleChoice(c.actionKey);
+    });
+
+
+    this.choiceContainer.add(btn);
+    this.choiceContainer.add(txt);
+    this.choiceButtons.push(btn, txt);
+  });
+}
+
 
   clearChoices() {
     this.choiceButtons.forEach((obj) => obj.destroy());
@@ -419,73 +730,86 @@ export default class TailgatingScene extends Phaser.Scene {
      Ending screen (placeholder)
   ----------------------- */
   showEnding(ending) {
-    this.stopPressureTimer();
-    this.clearChoices();
+  this.stopPressureTimer();
+  this.clearChoices();
 
-    // Ensure meters frozen and evaluated.
-    useTailgatingStore.getState().evaluateEnding();
-    const state = useTailgatingStore.getState();
+  // Defensive: clear any previous ending overlay if it exists
+  this.clearEndingOverlay();
 
-    const { width, height } = this.scale;
+  useTailgatingStore.getState().evaluateEnding();
+  const state = useTailgatingStore.getState();
 
-    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.65);
+  const { width, height } = this.scale;
 
-    const panelW = Math.min(560, width * 0.86);
-    const panelH = 260;
+  const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.65);
 
-    const panel = this.add.rectangle(width / 2, height / 2, panelW, panelH, 0x0b0f14, 0.95);
-    panel.setStrokeStyle(2, 0x223044);
+  const panelW = Math.min(560, width * 0.86);
+  const panelH = 260;
 
-    const title =
-      ending === "perfect"
-        ? "Perfect Ending"
-        : ending === "good"
-        ? "Good Ending"
-        : "Fail Ending";
+  const panel = this.add.rectangle(width / 2, height / 2, panelW, panelH, 0x0b0f14, 0.95);
+  panel.setStrokeStyle(2, 0x223044);
 
-    const body =
-      ending === "perfect"
-        ? "You handled each encounter safely and kept overall risk low."
-        : ending === "good"
-        ? "No breach occurred, but repeated small concessions increased risk over time."
-        : "An unauthorised person gained access. Tailgating can lead to theft and safety risks.";
+  const title =
+    ending === "perfect"
+      ? "Perfect Ending"
+      : ending === "good"
+      ? "Good Ending"
+      : "Fail Ending";
 
-    const stats = `Risk: ${state.securityRisk}/100   Pressure: ${state.socialPressure}/100`;
+  const body =
+    ending === "perfect"
+      ? "You handled each encounter safely and kept overall risk low."
+      : ending === "good"
+      ? "No breach occurred, but repeated small concessions increased risk over time."
+      : "An unauthorised person gained access. Tailgating can lead to theft and safety risks.";
 
-    this.add.text(width / 2, height / 2 - 90, title, {
-      fontFamily: "system-ui, Arial",
-      fontSize: "20px",
-      color: "#e6eefc",
-    }).setOrigin(0.5);
+  const stats = `Risk: ${state.securityRisk}/100   Pressure: ${state.socialPressure}/100`;
 
-    this.add.text(width / 2, height / 2 - 45, body, {
-      fontFamily: "system-ui, Arial",
-      fontSize: "14px",
-      color: "#c9d7ee",
-      wordWrap: { width: panelW - 40 },
-      align: "center",
-    }).setOrigin(0.5);
+  const tTitle = this.add.text(width / 2, height / 2 - 90, title, {
+    fontFamily: "system-ui, Arial",
+    fontSize: "20px",
+    color: "#e6eefc",
+  }).setOrigin(0.5);
 
-    this.add.text(width / 2, height / 2 + 20, stats, {
-      fontFamily: "system-ui, Arial",
-      fontSize: "13px",
-      color: "#9fb6cf",
-    }).setOrigin(0.5);
+  const tBody = this.add.text(width / 2, height / 2 - 45, body, {
+    fontFamily: "system-ui, Arial",
+    fontSize: "14px",
+    color: "#c9d7ee",
+    wordWrap: { width: panelW - 40 },
+    align: "center",
+  }).setOrigin(0.5);
 
-    this.add.text(width / 2, height / 2 + 75, "Press R to restart", {
-      fontFamily: "system-ui, Arial",
-      fontSize: "13px",
-      color: "#e6eefc",
-    }).setOrigin(0.5);
+  const tStats = this.add.text(width / 2, height / 2 + 20, stats, {
+    fontFamily: "system-ui, Arial",
+    fontSize: "13px",
+    color: "#9fb6cf",
+  }).setOrigin(0.5);
 
-    this.input.keyboard.on("keydown-R", () => {
-      overlay.destroy();
-      panel.destroy();
-      useTailgatingStore.getState().resetGame();
-      this.refreshMeters();
-      this.startEncounter();
-    });
+  const tHint = this.add.text(width / 2, height / 2 + 75, "Press R to restart", {
+    fontFamily: "system-ui, Arial",
+    fontSize: "13px",
+    color: "#e6eefc",
+  }).setOrigin(0.5);
+
+  // Track all ending objects so we can cleanly destroy them later
+  this.endingObjects = [overlay, panel, tTitle, tBody, tStats, tHint];
+
+  // Remove old handler if present
+  if (this.restartKeyHandler) {
+    this.input.keyboard.off("keydown-R", this.restartKeyHandler);
+    this.restartKeyHandler = null;
   }
+
+  this.restartKeyHandler = () => {
+    this.clearEndingOverlay();
+    useTailgatingStore.getState().resetGame();
+    this.refreshMeters();
+    this.startEncounter();
+  };
+
+  this.input.keyboard.on("keydown-R", this.restartKeyHandler);
+}
+
 
   /* -----------------------
      Meters render
@@ -517,6 +841,37 @@ export default class TailgatingScene extends Phaser.Scene {
     if (this.player?._viz) this.player._viz.setPosition(this.player.x, this.player.y);
     if (this.npc?._viz) this.npc._viz.setPosition(this.npc.x, this.npc.y);
   }
+
+  clearEndingOverlay() {
+  if (this.restartKeyHandler) {
+    this.input.keyboard.off("keydown-R", this.restartKeyHandler);
+    this.restartKeyHandler = null;
+  }
+
+  if (this.endingObjects && this.endingObjects.length > 0) {
+    this.endingObjects.forEach((o) => {
+      if (o && !o.destroyed) o.destroy();
+    });
+  }
+  this.endingObjects = [];
+}
+
+advanceEncounter() {
+  this.txtFeedback.setText("");
+
+  const store = useTailgatingStore.getState();
+  const next = store.encounterIndex + 1;
+
+  if (next >= store.totalEncounters) {
+    store.evaluateEnding();
+    this.showEnding(store.ending || "good");
+    return;
+  }
+
+  store.setEncounterIndex(next);
+  this.startEncounter();
+}
+
 
   update() {
     this.syncViz();
