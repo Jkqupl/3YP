@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import ModuleCard from "../components/ModuleCard";
+import { modules } from "../data/modules";
 
 export default function Home() {
   return (
@@ -30,9 +31,17 @@ export default function Home() {
 
         <section className="grid md:grid-cols-3 gap-10">
           <ModuleCard
-            title="Phishing Attacks"
-            description="Identify malicious emails and deceptive login pages"
-            link="/module/phishing"
+            title={modules[0].title}
+            description={modules[0].description}
+            link={modules[0].route}
+          />
+        </section>
+
+        <section className="grid md:grid-cols-3 gap-10">
+          <ModuleCard
+            title={modules[1].title}
+            description={modules[1].description}
+            link={modules[1].route}
           />
         </section>
       </div>
