@@ -7,7 +7,7 @@ export const modules = [
   },
   {
     id: "tailgating",
-    title: "tailgating attacks",
+    title: "Tailgating attacks",
     description: "Apartment entry scenarios where social pressure can lead to unsafe access decisions",
     route: "/module/tailgating"
   }

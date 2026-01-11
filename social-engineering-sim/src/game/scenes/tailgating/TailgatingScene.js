@@ -72,6 +72,16 @@ export default class TailgatingScene extends Phaser.Scene {
     this.canContinueAt = 0;
     this.onContinueHandler = null;
 
+    this.encounterPhase = "initial"; // "initial" | "followup"
+    this.encounterCtx = null; // { asked: boolean, usedIntercom: boolean, info: {...} }
+
+    this.dialogueQueue = [];
+    this.dialogueIndex = 0;
+    this.dialogueActive = false;
+
+    this.dialogueTimer = null;
+    this.dialogueAutoDelayMs = 2150; // tune
+
     this.lastDirection = "front";
   }
 
@@ -88,8 +98,20 @@ export default class TailgatingScene extends Phaser.Scene {
     this.onContinueHandler = () => {
       const store = useTailgatingStore.getState();
       if (store.ending) return;
+
+      // If dialogue is active, page it instead of advancing the encounter
+      if (this.dialogueActive) {
+        if (Date.now() < this.canContinueAt) return;
+
+        // This already handles: incrementing index, clearing timers, finishing state
+        this.advanceDialoguePage();
+        return;
+      }
+
+      // Normal continue flow
       if (!this.awaitingContinue) return;
       if (Date.now() < this.canContinueAt) return;
+
       this.awaitingContinue = false;
       this.advanceEncounter();
     };
@@ -349,6 +371,10 @@ export default class TailgatingScene extends Phaser.Scene {
     this.txtDialogBody.setText(encounter.subtitle);
     this.txtFeedback.setText("");
 
+    this.encounterPhase = "initial";
+    this.encounterCtx = { asked: false, usedIntercom: false, info: null };
+
+
 
     // Reset NPC position for the encounter
     this.resetNPC();
@@ -369,11 +395,26 @@ export default class TailgatingScene extends Phaser.Scene {
      NPC placeholder movement + pressure
   ----------------------- */
   resetNPC() {
-    const { width, height } = this.scale;
-    this.npc.setPosition(width / 2, height * 0.75);
+  const { width, height } = this.scale;
+  const x = width / 2;
+  const y = height * 0.75;
+
+  // stop any exit tween still running
+  this.tweens.killTweensOf(this.npc);
+  this.tweens.killTweensOf(this.npc?._viz);
+
+  // hard place both visuals
+  this.npc.setPosition(x, y);
+  if (this.npc?._viz) this.npc._viz.setPosition(x, y);
+
+  // re enable physics and hard reset the body to the same coordinates
+  if (this.npc.body) {
+    this.npc.body.enable = true;
+    this.npc.body.reset(x, y);      // critical: prevents snapping / teleporting
     this.npc.body.setVelocity(0, 0);
-    this.syncViz();
   }
+}
+
 
   startPressureTimer(type) {
   // Base pressure rate differs by encounter.
@@ -395,9 +436,10 @@ export default class TailgatingScene extends Phaser.Scene {
 
       if (inQueue) {
         // Stop NPC when it reaches queue zone (simple clamp)
-        if (this.npc.y <= this.zoneQueue.y + this.zoneQueue.h / 4) {
+       if (this.npc.y <= this.zoneQueue.y) {
           this.npc.body.setVelocity(0, 0);
         }
+
 
         if (addsPressure) {
           store.applyDeltas({
@@ -426,56 +468,72 @@ export default class TailgatingScene extends Phaser.Scene {
   /* -----------------------
      Choices
   ----------------------- */
-  getChoicesForEncounter(type) {
-    // Each choice entry: { label, action }
-    const store = useTailgatingStore.getState();
+getChoicesForEncounter(type) {
+  const { ending } = useTailgatingStore.getState();
+  if (ending) return [];
 
-    if (type === "decision_neighbour") {
-      return [
-        { label: "Hold door open", actionKey: "HOLD_DOOR" },
-        { label: "Point to key fob reader", actionKey: "REDIRECT_FOB" },
-        { label: "Use intercom", actionKey: "USE_INTERCOM" },
-        { label: "Ask a brief question", actionKey: "ASK_QUESTION" },
-      ];
-    }
-
-    if (type === "decision_parcel") {
-      return [
-        { label: "Hold door open", actionKey: "HOLD_DOOR" },
-        { label: "Point to key fob reader", actionKey: "REDIRECT_FOB" },
-        { label: "Wait silently", actionKey: "WAIT_SILENT" },
-        { label: "Ask a brief question", actionKey: "ASK_QUESTION" },
-      ];
-    }
-
-    if (type === "decision_ambiguous") {
-      return [
-        { label: "Ask a question", actionKey: "ASK_QUESTION" },
-        { label: "Wait and observe", actionKey: "WAIT_SILENT" },
-        { label: "Redirect to key fob", actionKey: "REDIRECT_FOB" },
-        { label: "Use intercom", actionKey: "USE_INTERCOM" },
-        { label: "Hold door open", actionKey: "HOLD_DOOR" },
-      ];
-    }
-
-
-    if (type === "decision_attacker_clear") {
-      return [
-        { label: "Let them in quickly", actionKey: "LET_IN" },
-        { label: "Refuse and redirect to process", actionKey: "REFUSE" },
-        { label: "Use intercom", actionKey: "USE_INTERCOM" },
-      ];
-    }
-
-    // advanced attacker: harder judgement. For now still deterministic by action.
-    return [
-      { label: "Hold door open", actionKey: "HOLD_DOOR" },
-      { label: "Ask a question", actionKey: "ASK_QUESTION" },
-      { label: "Redirect to key fob", actionKey: "REDIRECT_FOB" },
-      { label: "Use intercom", actionKey: "USE_INTERCOM" },
-    ];
-  
+  if (this.encounterPhase === "followup") {
+    return this.getFollowupChoices(type);
   }
+  return this.getInitialChoices(type);
+}
+
+getInitialChoices(type) {
+  if (type === "decision_neighbour") {
+    return [
+      { label: "Ask a brief question", actionKey: "ASK_QUESTION" },
+      { label: "Use intercom", actionKey: "USE_INTERCOM" },
+      { label: "Point to key fob reader", actionKey: "REDIRECT_FOB" },
+      { label: "Hold door open", actionKey: "HOLD_DOOR" },
+    ];
+  }
+
+  if (type === "decision_parcel") {
+    return [
+      { label: "Ask a brief question", actionKey: "ASK_QUESTION" },
+      { label: "Point to key fob reader", actionKey: "REDIRECT_FOB" },
+      { label: "Wait silently", actionKey: "WAIT_SILENT" },
+      { label: "Hold door open", actionKey: "HOLD_DOOR" },
+    ];
+  }
+
+  if (type === "decision_ambiguous") {
+    return [
+      { label: "Ask a question", actionKey: "ASK_QUESTION" },
+      { label: "Use intercom", actionKey: "USE_INTERCOM" },
+      { label: "Wait and observe", actionKey: "WAIT_SILENT" },
+      { label: "Redirect to key fob", actionKey: "REDIRECT_FOB" },
+      { label: "Hold door open", actionKey: "HOLD_DOOR" },
+    ];
+  }
+
+  if (type === "decision_attacker_clear") {
+    return [
+      { label: "Use intercom", actionKey: "USE_INTERCOM" },
+      { label: "Refuse and redirect to process", actionKey: "REFUSE" },
+      { label: "Let them in quickly", actionKey: "LET_IN" },
+    ];
+  }
+
+  return [
+    { label: "Ask a question", actionKey: "ASK_QUESTION" },
+    { label: "Use intercom", actionKey: "USE_INTERCOM" },
+    { label: "Redirect to key fob", actionKey: "REDIRECT_FOB" },
+    { label: "Hold door open", actionKey: "HOLD_DOOR" },
+  ];
+}
+
+getFollowupChoices(type) {
+  // Always include the final decision pair
+  if(type === "decision_attacker_clear") return [];
+  const choices = [
+    { label: "Refuse entry", actionKey: "FINAL_REFUSE" },
+    { label: "Let them in", actionKey: "FINAL_LET_IN" },
+  ];
+  
+  return choices;
+}
+
 
   /* -----------------------
       outcomes for decisions
@@ -493,159 +551,432 @@ export default class TailgatingScene extends Phaser.Scene {
   // Helper: pressure feels worse when already high
   const pressureBonus = store.socialPressure >= 60 ? 2 : 0;
 
-  if (encounterType === "decision_neighbour") {
-    if (actionKey === "HOLD_DOOR") {
-      riskDelta = 5;
-      response = "Neighbour slips in without authenticating.";
-      feedback = "Even for neighbours, bypassing access controls increases long term risk.";
-    } else if (actionKey === "REDIRECT_FOB") {
-      pressureDelta = 3 + pressureBonus;
-      response = "\"Oh right... I'll buzz my partner.\"";
-      feedback = "Redirecting to the key fob keeps the building secure.";
-    } else if (actionKey === "USE_INTERCOM") {
-      response = "You suggest using the intercom.";
-      feedback = "Using the building process reduces risk without escalating the situation.";
-      pressureDelta = -6;
-    } else if (actionKey === "ASK_QUESTION") {
-      response = "\"Which floor are you on?\" They hesitate slightly.";
-      feedback = "Simple questions buy time and surface inconsistencies.";
-      pressureDelta = -3;
-    }
+if (encounterType === "decision_neighbour") {
+  if (actionKey === "REFUSE") {
+    response =
+      "You: I can't let you in if you don't have your keys sorry.";
+    feedback =
+      "Consistency matters. Being polite while enforcing the process keeps risk low.";
+    pressureDelta = 4 + pressureBonus;
+  } else if (actionKey === "HOLD_DOOR") {
+    riskDelta = 5;
+    response =
+      "You: Go on.\nNPC: Thanks.";
+    feedback =
+      "Even for neighbours, bypassing access controls increases long term risk.";
+  } else if (actionKey === "REDIRECT_FOB") {
+    pressureDelta = 3 + pressureBonus;
+    response =
+      "You: Could you tap your fob?\nNPC: I forgot it ... but I'll just buzz my partner.";
+    feedback = "Redirecting to the key fob keeps the building secure.";
+  } else if (actionKey === "USE_INTERCOM") {
+    // Intercom is not a suggestion, it returns a result
+    response = [
+      "You: I'll buzz your flat, which number?.",
+      "Intercom: Flat 4.",
+      "Intercom: Verified.",
+      "NPC: Told you I live here!"
+    ];
+    feedback =
+      "Verification reduces risk without escalating the situation.";
+    pressureDelta = -6;
+    riskDelta = -2;
+  } else if (actionKey === "ASK_QUESTION") {
+    response =
+      "You: Which foor do you live on?\nNPC: Floor 2, we're literally neighbours!";
+    feedback = "Simple questions buy time and surface inconsistencies.";
+    pressureDelta = -3;
   }
+}
 
-  if (encounterType === "decision_parcel") {
-    if (actionKey === "HOLD_DOOR") {
-      riskDelta = 5;
-      response = "They enter while you hold the door.";
-      feedback = "Common excuse. Encourage them to authenticate instead.";
-    } else if (actionKey === "REDIRECT_FOB") {
-      response = "They shift the parcel and tap their fob.";
-      feedback = "Waiting and redirecting keeps risk low.";
-      pressureDelta = 4 + pressureBonus;
-    } else if (actionKey === "WAIT_SILENT") {
-      response = "You wait. They eventually use the reader.";
-      feedback = "Waiting gives people space to authenticate themselves.";
-      pressureDelta = 8 + pressureBonus;
-    } else if (actionKey === "ASK_QUESTION") {
-      response = "\"Can you use your fob?\" They nod and do so.";
-      feedback = "Clear, calm prompts reduce both pressure and risk.";
-      pressureDelta = -2;
-    }
-  }
 
-  if (encounterType === "decision_ambiguous") {
-    if (actionKey === "HOLD_DOOR") {
-      riskDelta = 10;
-      response = "They enter quickly without showing a fob.";
-      feedback = "Letting someone in without authentication increases risk significantly.";
-    } else if (actionKey === "REDIRECT_FOB") {
-      response = "\"I left it upstairs...\"";
-      feedback = "No fob is a warning sign. Use intercom or refuse.";
-      pressureDelta = 6 + pressureBonus;
-    } else if (actionKey === "USE_INTERCOM") {
-      response = "Intercom verification fails. They look annoyed.";
-      feedback = "Verification protects you when someone cannot authenticate.";
-      pressureDelta = 4;
-    } else if (actionKey === "ASK_QUESTION") {
-      response = "\"Uh, second floor.\" They avoid eye contact.";
-      feedback = "Inconsistency is a signal. Do not compensate by holding the door.";
-      pressureDelta = 2;
-    } else if (actionKey === "WAIT_SILENT") {
-      response = "They linger behind you.";
-      feedback = "Waiting can increase pressure. Use a clear process instead.";
-      pressureDelta = 10 + pressureBonus;
-    }
+if (encounterType === "decision_parcel") {
+  if (actionKey === "REFUSE") {
+    response =
+      "You: No , use your own keys!";
+    feedback = "You can be helpful without bypassing security controls.";
+    pressureDelta = 5 + pressureBonus;
+  } else if (actionKey === "HOLD_DOOR") {
+    riskDelta = 5;
+    response =
+      "You: Go on.\nNPC: Thanks.\nNPC: (enters while you hold the door)";
+    feedback = "Common excuse. Encourage them to authenticate instead.";
+  } else if (actionKey === "REDIRECT_FOB") {
+    response = [
+      "You: I'd prefer you tap your fob?",
+      "NPC: Fine! One sec.",
+      "NPC: (shifts parcel and taps fob)"
+    ];
+    feedback = "Waiting and redirecting keeps risk low.";
+    pressureDelta = 4 + pressureBonus;
+  } else if (actionKey === "WAIT_SILENT") {
+    response = [
+      "You: (waits) ",
+      "NPC: ... ",
+      "NPC: Fine.",
+      "NPC: (Puts down parcel and uses the reader)"
+    ];
+    feedback = "Waiting gives people space to authenticate themselves.";
+    pressureDelta = 8 + pressureBonus;
+  } else if (actionKey === "ASK_QUESTION") {
+    response = [
+      "You: Why don't you use your fob?",
+      "NPC: ...",
+      "NPC: Can't you see my hands are full?.",
+      
+    ]
+    feedback = "Clear, calm prompts reduce both pressure and risk.";
+    pressureDelta = -2;
   }
+}
 
-  if (encounterType === "decision_attacker_clear") {
-    if (actionKey === "LET_IN") {
-      fail = true;
-      response = "They rush in immediately.";
-      feedback = "Urgency is commonly used to force mistakes.";
-    } else if (actionKey === "REFUSE") {
-      response = "You refuse and point to the proper process.";
-      feedback = "Refusing under pressure keeps everyone safe.";
-      pressureDelta = -6;
-    } else if (actionKey === "USE_INTERCOM") {
-      response = "Intercom check fails. They leave angrily.";
-      feedback = "Verification is safer than relying on someone’s story.";
-      pressureDelta = 2;
-    }
+if (encounterType === "decision_ambiguous") {
+  if (actionKey === "REFUSE") {
+    response =
+      "You: Sorry, I can't let you in.\nYou: Please use the intercom or speak to security.";
+    feedback = "When identity is unclear, refusing is the safest option.";
+    pressureDelta = 6 + pressureBonus;
+    riskDelta = -2;
+  } else if (actionKey === "HOLD_DOOR") {
+    riskDelta = 10;
+    response =
+      "You: Go on.\nNPC: Cheers.\nNPC: (enters without showing a fob)";
+    feedback =
+      "Letting someone in without authentication increases risk significantly.";
+  } else if (actionKey === "REDIRECT_FOB") {
+    response =
+      "You: Please tap your fob.\nNPC: I left it upstairs.";
+    feedback = "No fob is a warning sign. Use intercom or refuse.";
+    pressureDelta = 6 + pressureBonus;
+  } else if (actionKey === "USE_INTERCOM") {
+    response = [
+      "You: I'll buzz the flat.",
+      "Intercom: No answer.",
+      "NPC: Seriously?",
+      "NPC: Just let me in."
+    ];
+    feedback = "Verification protects you when someone cannot authenticate.";
+    pressureDelta = 4;
+  } else if (actionKey === "ASK_QUESTION") {
+    response =
+      "You: Which flat are you visiting?\nNPC: Uh, second floor.";
+    feedback =
+      "Inconsistency is a signal. Do not compensate by holding the door.";
+    pressureDelta = 2;
+  } else if (actionKey === "WAIT_SILENT") {
+    response = [
+      "You: (waits)",
+      "NPC: ...",
+      "NPC: (lingers)",
+      "NPC: (walks away)"
+    ];
+    feedback = "Waiting can increase pressure. Use a clear process instead.";
+    pressureDelta = 10 + pressureBonus;
   }
+}
 
-  if (encounterType === "decision_attacker_advanced") {
-    if (actionKey === "HOLD_DOOR") {
-      fail = true;
-      response = "They enter calmly as if they belong.";
-      feedback = "Advanced tailgaters mimic normal behaviour to avoid suspicion.";
-    } else if (actionKey === "ASK_QUESTION") {
-      response = "They answer smoothly, but still do not authenticate.";
-      feedback = "Confidence is not proof. Require authentication.";
-      pressureDelta = 4 + pressureBonus;
-    } else if (actionKey === "REDIRECT_FOB") {
-      response = "\"Oh, I forgot it.\"";
-      feedback = "Consistent rules stop manipulation, even when they seem legitimate.";
-      pressureDelta = 5 + pressureBonus;
-    } else if (actionKey === "USE_INTERCOM") {
-      response = "Intercom verification fails. They back off.";
-      feedback = "Process beats persuasion. This prevents repeat attempts.";
-      pressureDelta = -4;
-    }
+
+if (encounterType === "decision_attacker_clear") {
+  if (actionKey === "LET_IN") {
+    fail = true;
+    response =
+      "NPC: I'm late. Just let me in.\nYou: Okay.\nNPC: (rushes in)";
+    feedback = "Urgency is commonly used to force mistakes.";
+  } else if (actionKey === "REFUSE") {
+    response =
+      "You: Sorry, no tailgating.\nYou: Use the intercom or your fob.";
+    feedback = "Refusing under pressure keeps everyone safe.";
+    pressureDelta = -6;
+  } else if (actionKey === "USE_INTERCOM") {
+    response = [
+      "You: I'll buzz the flat.",
+      "Intercom: No answer.",
+      "NPC: Forget it.",
+      "NPC: (leaves angrily)"
+    ];
+    feedback = "Verification is safer than relying on someone’s story.";
+    pressureDelta = 2;
   }
+}
+
+
+if (encounterType === "decision_attacker_advanced") {
+  if (actionKey === "LET_IN") {
+    fail = true;
+    response = "You let them in. They enter calmly as if they belong.";
+    feedback = "Skilled tailgaters rely on you normalising their access. Authentication is the only proof.";
+  } else if (actionKey === "REFUSE") {
+    response = "You refuse and stay firm, directing them to the intercom or security procedure.";
+    feedback = "Calm firmness blocks social engineering, even when the story sounds plausible.";
+    pressureDelta = 4 + pressureBonus;
+    riskDelta = -3;
+  } else if (actionKey === "HOLD_DOOR") {
+    fail = true;
+    response = "They enter calmly as if they belong.";
+    feedback = "Advanced tailgaters mimic normal behaviour to avoid suspicion.";
+  } else if (actionKey === "ASK_QUESTION") {
+    response = "\"What floor are you on?\" Floor 3, they answer smoothly.";
+    feedback = "Confidence is not proof. Require authentication.";
+    pressureDelta = 4 + pressureBonus;
+  } else if (actionKey === "REDIRECT_FOB") {
+    response = "\"Oh, I forgot it.\"";
+    feedback = "Consistent rules stop manipulation, even when they seem legitimate.";
+    pressureDelta = 5 + pressureBonus;
+  } else if (actionKey === "USE_INTERCOM") {
+    response = [
+      "Intercom verification fails",
+      "(They back off)"
+    ];
+    feedback = "Process beats persuasion. This prevents repeat attempts.";
+    pressureDelta = -4;
+  }
+}
+
 
   return { pressureDelta, riskDelta, response, feedback, fail };
 }
 
+
 /* -----------------------
 handle choice selection
+
 ----------------------- */
 
+npcHasFobForEncounter(type) {
+  // residents
+  if (type === "decision_parcel") return true;
+  if (type === "decision_neighbour") return false; // they forgot it in your script
+  // ambiguous and attackers
+  if (type === "decision_ambiguous") return false;
+  if (type.includes("attacker")) return false;
+  return false;
+}
+
 handleChoice(actionKey) {
-  
   const idx = useTailgatingStore.getState().encounterIndex;
   const encounter = ENCOUNTERS[idx];
   const type = encounter.type;
 
-  const outcome = this.getOutcome(type, actionKey);
+  // Map followup choices to existing outcomes
+  let resolvedKey = actionKey;
+  if (actionKey === "FINAL_LET_IN") resolvedKey = "LET_IN";
+  if (actionKey === "FINAL_REFUSE") resolvedKey = "REFUSE";
+  if (actionKey === "FINAL_REDIRECT_FOB") resolvedKey = "REDIRECT_FOB";
+  if (actionKey === "FINAL_USE_INTERCOM") resolvedKey = "USE_INTERCOM";
+
+  const noFollowup = type === "decision_attacker_clear";
+
+  // Phase 1 gather info
+
+    // Special: REDIRECT_FOB is only a first wave choice and it resolves immediately
+  if (this.encounterPhase === "initial" && resolvedKey === "REDIRECT_FOB") {
+    this.stopPressureTimer();
+    this.stopNPC();
+
+    const hasFob = this.npcHasFobForEncounter(type);
+
+    if (hasFob) {
+      // They authenticate and enter
+      const response = [
+        "You: Please tap your fob.",
+        "NPC: Yeah, one sec.",
+        "NPC: (taps fob and the door unlocks)",
+        "NPC: Thanks."
+      ];
+
+      useTailgatingStore.getState().applyDeltas({
+        pressureDelta: 2,
+        riskDelta: -1,
+        incident: {
+          encounter: idx,
+          type: "choice",
+          message: `REDIRECT_FOB success (p2, r-1)`,
+        },
+      });
+      this.refreshMeters();
+
+      this.showDialogue(response);
+
+      // Move them into the building automatically
+      this.moveNPCOut("in");
+
+      // End encounter
+      this.clearChoices();
+      this.awaitingContinue = true;
+      this.canContinueAt = Date.now() + 900;
+      this.txtFeedback.setText("Good call. They authenticated.\n\nClick or press Enter to continue");
+      return;
+    }
+
+    // No fob: now we go to followup decision (refuse vs let in)
+    const response = [
+      "You: Please tap your fob.",
+      "NPC: I don't have it on me.",
+      "NPC: Can you just let me in?"
+    ];
+
+    useTailgatingStore.getState().applyDeltas({
+      pressureDelta: 6,
+      riskDelta: 0,
+      incident: {
+        encounter: idx,
+        type: "choice",
+        message: `REDIRECT_FOB failed (p6, r0)`,
+      },
+    });
+    this.refreshMeters();
+
+    this.showDialogue(response);
+
+    this.encounterPhase = "followup";
+    this.encounterCtx = { ...this.encounterCtx, asked: true }; // optional marker
+
+    // show only final decision choices
+    this.renderChoices(this.getChoicesForEncounter(type));
+    return;
+  }
+
+  const isGatherInfoAction = resolvedKey === "ASK_QUESTION" || resolvedKey === "USE_INTERCOM";
+  if (this.encounterPhase === "initial" && isGatherInfoAction) {
+    const outcome = this.getOutcome(type, resolvedKey);
+    this.stopPressureTimer();
+    this.stopNPC();
+
+
+    useTailgatingStore.getState().applyDeltas({
+      pressureDelta: outcome.pressureDelta,
+      riskDelta: outcome.riskDelta,
+      incident: {
+        encounter: idx,
+        type: "choice",
+        message: `${resolvedKey} (p${outcome.pressureDelta}, r${outcome.riskDelta})`,
+      },
+    });
+    this.refreshMeters();
+
+    if (outcome.response) this.showDialogue(outcome.response);
+    this.txtFeedback.setText(outcome.feedback || "");
+
+    if (outcome.fail) {
+      useTailgatingStore.getState().setFail("An unauthorised person gained access.");
+      this.showEnding("fail");
+      return;
+    }
+
+    const isAttacker = type.includes("attacker");
+
+    // terminal if clear attacker (any gather action), OR advanced attacker intercom
+    const terminalGather =
+      noFollowup || (type === "decision_attacker_advanced" && resolvedKey === "USE_INTERCOM");
+
+    if (terminalGather) {
+      // attackers should leave after intercom
+      this.clearChoices();
+
+      this.endEncounterAfterDialogue({
+        direction: "out",
+        response: outcome.response,
+        feedback: outcome.feedback,
+        minReadMs: 1100,
+      });
+
+      return;
+    }
+
+
+    this.encounterPhase = "followup";
+    this.renderChoices(this.getChoicesForEncounter(type));
+    return;
+  }
+
+
+  // Phase 2 gather info (intercom only)
+  const isFinalGather =
+    this.encounterPhase === "followup" &&
+    resolvedKey === "USE_INTERCOM" &&
+    !this.encounterCtx?.usedIntercom;
+
+  if (isFinalGather) {
+    const outcome = this.getOutcome(type, resolvedKey);
+    this.stopPressureTimer();
+    this.stopNPC();
+
+
+    useTailgatingStore.getState().applyDeltas({
+      pressureDelta: outcome.pressureDelta,
+      riskDelta: outcome.riskDelta,
+      incident: {
+        encounter: idx,
+        type: "choice",
+        message: `${resolvedKey} (p${outcome.pressureDelta}, r${outcome.riskDelta})`,
+      },
+    });
+    this.refreshMeters();
+
+    if (outcome.response) this.showDialogue(outcome.response);
+    this.txtFeedback.setText(outcome.feedback || "");
+
+    this.encounterCtx.usedIntercom = true;
+
+    // Optional: keep pressure going
+    // this.startPressureTimer(type);
+
+    this.renderChoices(this.getChoicesForEncounter(type));
+    return;
+  }
+
+  // Final action (ends encounter)
+  const outcome = this.getOutcome(type, resolvedKey);
   this.stopPressureTimer();
+  this.stopNPC();
+
+  const entersBuilding =
+  resolvedKey === "LET_IN" ||
+  resolvedKey === "HOLD_DOOR";
+
+  // For REFUSE or USE_INTERCOM final outcomes, they leave
+  this.moveNPCOut(entersBuilding ? "in" : "out");
+
+
 
 
   if (outcome.fail) {
     useTailgatingStore.getState().setFail("An unauthorised person gained access.");
     this.refreshMeters();
     this.txtFeedback.setText(outcome.feedback || "");
-    this.txtDialogBody.setText(outcome.response || "");
+     this.showDialogue(outcome.response || "");
     this.showEnding("fail");
     return;
   }
 
-  // Apply meter changes
   useTailgatingStore.getState().applyDeltas({
     pressureDelta: outcome.pressureDelta,
     riskDelta: outcome.riskDelta,
     incident: {
       encounter: idx,
       type: "choice",
-      message: `${actionKey} (p${outcome.pressureDelta}, r${outcome.riskDelta})`,
+      message: `${resolvedKey} (p${outcome.pressureDelta}, r${outcome.riskDelta})`,
     },
   });
 
   this.refreshMeters();
 
-  // Show response and feedback instead of instantly skipping
-  if (outcome.response) this.txtDialogBody.setText(outcome.response);
+  if (outcome.response) this.showDialogue(outcome.response);
   this.txtFeedback.setText(outcome.feedback || "");
 
-  // Disable current choices while we show feedback
   this.clearChoices();
 
-  // Keep feedback on screen until user continues
-this.awaitingContinue = true;
-this.canContinueAt = Date.now() + 1200; // prevents instant skip
+  this.endEncounterAfterDialogue({
+    direction: entersBuilding ? "in" : "out",
+    response: outcome.response,
+    feedback: outcome.feedback,
+    minReadMs: 1100,
+  });
 
-// Optional hint line
-this.txtFeedback.setText((outcome.feedback || "") + "\n\nClick or press Enter to continue");
+  return;
+
 }
+
 
 
  renderChoices(choices) {
@@ -872,6 +1203,161 @@ advanceEncounter() {
   this.startEncounter();
 }
 
+showDialogue(response) {
+    this.clearDialogueTimer();
+
+  // Simple string, just show it
+  if (!Array.isArray(response)) {
+    this.txtDialogBody.setText(response);
+    return;
+  }
+
+  this.dialogueQueue = response;
+  this.dialogueIndex = 0;
+
+  // If it fits in one page, do not enter paging mode
+  if (response.length <= 3) {
+    this.dialogueActive = false;
+    this.txtDialogBody.setText(response.join("\n"));
+    return;
+  }
+
+
+  // Otherwise page it
+  this.dialogueActive = true;
+  this.renderDialoguePage();
+}
+
+
+renderDialoguePage() {
+  this.clearDialogueTimer();
+
+  const page = this.dialogueQueue
+    .slice(this.dialogueIndex, this.dialogueIndex + 3)
+    .join("\n");
+
+  this.txtDialogBody.setText(page);
+
+  // Subtle hint, but it will still auto-advance
+  this.txtFeedback.setText("Click or Enter to skip");
+
+  this.awaitingContinue = true;
+  this.canContinueAt = Date.now() + 150;
+
+  // Auto advance to next page
+  this.dialogueTimer = this.time.addEvent({
+    delay: this.dialogueAutoDelayMs,
+    callback: () => {
+      if (!this.dialogueActive) return;
+      this.advanceDialoguePage();
+    },
+  });
+}
+
+advanceDialoguePage() {
+  if (!this.dialogueActive) return;
+
+  this.dialogueIndex += 3;
+
+  // Finished all pages
+  if (this.dialogueIndex >= this.dialogueQueue.length) {
+    this.dialogueActive = false;
+    this.clearDialogueTimer();
+
+    // allow click/enter to advance the encounter after the last page
+    this.awaitingContinue = true;
+    this.canContinueAt = Date.now() + 150;
+
+    // only set a generic prompt if something else has not already set feedback
+    if (!this.txtFeedback.text || this.txtFeedback.text === "Click or Enter to skip") {
+      this.txtFeedback.setText("Click or press Enter to continue");
+    }
+    return;
+  }
+
+
+  this.renderDialoguePage();
+}
+
+
+clearDialogueTimer() {
+  if (this.dialogueTimer) {
+    this.dialogueTimer.remove(false);
+    this.dialogueTimer = null;
+  }
+}
+
+stopNPC() {
+  if (!this.npc?.body) return;
+  this.npc.body.setVelocity(0, 0);
+}
+
+moveNPCOut(direction, onDone) {
+  if (!this.npc || !this.npc._viz) {
+    if (onDone) onDone();
+    return;
+  }
+
+  this.stopNPC();
+
+  // Kill tweens on both objects just in case
+  this.tweens.killTweensOf(this.npc);
+  this.tweens.killTweensOf(this.npc._viz);
+
+  // Disable physics while tweening so Arcade does not fight us
+  if (this.npc.body) {
+    this.npc.body.setVelocity(0, 0);
+    this.npc.body.enable = false;
+  }
+
+  const { width, height } = this.scale;
+
+  const targetY = direction === "in" ? -60 : height + 80;
+  const drift = Phaser.Math.Between(-20, 20);
+  const targetX = Phaser.Math.Clamp(this.npc._viz.x + drift, 40, width - 40);
+
+  this.tweens.add({
+    targets: this.npc._viz,
+    x: targetX,
+    y: targetY,
+    duration: 1200,
+    ease: "Sine.easeInOut",
+    onUpdate: () => {
+      this.npc.setPosition(this.npc._viz.x, this.npc._viz.y);
+      if (this.npc.body) this.npc.body.reset(this.npc.x, this.npc.y);
+    },
+    onComplete: () => {
+      this.npc.setPosition(this.npc._viz.x, this.npc._viz.y);
+      if (this.npc.body) this.npc.body.reset(this.npc.x, this.npc.y);
+      if (onDone) onDone();
+    },
+  });
+}
+
+endEncounterAfterDialogue({
+  direction,          // "in" | "out"
+  response,           // string or array
+  feedback,           // string
+  minReadMs = 900,    // how long before continue works
+}) {
+  // show the text
+  if (response) this.showDialogue(response);
+  this.txtFeedback.setText(feedback || "");
+
+  // block advancing for a bit
+  this.awaitingContinue = false;
+  this.canContinueAt = Date.now() + minReadMs;
+
+  // animate npc out, then enable continue
+  this.moveNPCOut(direction, () => {
+    this.awaitingContinue = true;
+    // still respect minReadMs if user is spam clicking
+    if (Date.now() < this.canContinueAt) {
+      // do nothing, handler already checks canContinueAt
+    }
+    this.txtFeedback.setText((feedback || "") + "\n\nClick or press Enter to continue");
+  });
+}
 
   update() {
     this.syncViz();
