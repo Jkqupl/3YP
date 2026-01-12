@@ -14,7 +14,18 @@ export default function TailgatingModule() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-      <div className="w-full max-w-6xl border border-cyan-500 bg-slate-900/90 shadow-xl rounded-xl overflow-hidden">
+      <div className="w-full max-w-6xl bg-slate-950 shadow-xl rounded-xl overflow-hidden">
+        {/* Breadcrumb only when NOT in simulation */}
+        {!started && (
+          <div className="text-sm text-slate-400 px-10 pt-6">
+            <Link to="/" className="text-cyan-400 hover:text-cyan-300">
+              Home
+            </Link>
+            <span className="mx-1">/</span>
+            <span>Tailgaiting Module</span>
+          </div>
+        )}
+
         {!started ? (
           <div className="p-10 space-y-10">
             <div className="flex items-start justify-between gap-6">
@@ -30,13 +41,6 @@ export default function TailgatingModule() {
                   like deliveries to pressure you into holding the door.
                 </p>
               </div>
-
-              <Link
-                to="/"
-                className="text-slate-300 hover:text-cyan-200 underline"
-              >
-                Back
-              </Link>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -50,14 +54,11 @@ export default function TailgatingModule() {
                     Redirect people to authenticate using their own key fob.
                   </li>
                   <li>
-                    Use the intercom or building process when someone “forgot”
+                    Use the intercom or building process when someone forgot
                     access.
                   </li>
-                  <li>
-                    Treat urgency and frustration as warning signs, not reasons
-                    to rush.
-                  </li>
-                  <li>Be consistent, small exceptions add up over time.</li>
+                  <li>Treat urgency and frustration as warning signs.</li>
+                  <li>Be consistent, small exceptions add up.</li>
                 </ul>
               </div>
 
@@ -66,17 +67,10 @@ export default function TailgatingModule() {
                   What you will practice
                 </h2>
                 <ul className="list-disc list-inside text-slate-300 space-y-2">
-                  <li>
-                    Recognising tailgating attempts in residential settings
-                  </li>
-                  <li>
-                    Managing social pressure without compromising security
-                  </li>
-                  <li>Asking quick questions to gather signals</li>
-                  <li>
-                    Making safe decisions consistently across multiple
-                    encounters
-                  </li>
+                  <li>Recognising tailgating attempts</li>
+                  <li>Managing social pressure</li>
+                  <li>Asking quick questions</li>
+                  <li>Making safe decisions consistently</li>
                 </ul>
 
                 <div className="pt-2">
@@ -96,8 +90,9 @@ export default function TailgatingModule() {
         ) : (
           <div className="h-[78vh] w-full">
             <TailgatingSimulation />
+
             {ending ? (
-              <div className="p-4 border-t border-cyan-500/40 bg-slate-950/40 flex items-center justify-between">
+              <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
                 <div className="text-slate-300">
                   Result:{" "}
                   <span className="font-semibold text-cyan-200">{ending}</span>
@@ -113,7 +108,7 @@ export default function TailgatingModule() {
                 </button>
               </div>
             ) : (
-              <div className="p-4 border-t border-cyan-500/40 bg-slate-950/40 flex items-center justify-between">
+              <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
                 <div className="text-slate-400 text-sm">
                   Tip: If you feel rushed, slow down and redirect to the key fob
                   or intercom process.

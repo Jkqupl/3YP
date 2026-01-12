@@ -29,20 +29,15 @@ export default function Home() {
           </p>
         </section>
 
-        <section className="grid md:grid-cols-3 gap-10">
-          <ModuleCard
-            title={modules[0].title}
-            description={modules[0].description}
-            link={modules[0].route}
-          />
-        </section>
-
-        <section className="grid md:grid-cols-3 gap-10">
-          <ModuleCard
-            title={modules[1].title}
-            description={modules[1].description}
-            link={modules[1].route}
-          />
+        <section className="grid sm:grid-cols-2 md:grid-cols-3 gap-10">
+          {modules.map((module) => (
+            <ModuleCard
+              key={module.route}
+              title={module.title}
+              description={module.description}
+              link={module.route}
+            />
+          ))}
         </section>
       </div>
     </div>
