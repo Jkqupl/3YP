@@ -39,6 +39,13 @@ const OPTIONS = {
   ]
 };
 
+function scenarioOptions(scenario, category) {
+  const allowedIds = scenario.allowed?.[category];
+  if (!allowedIds) return OPTIONS[category];
+  return OPTIONS[category].filter((o) => allowedIds.includes(o.id));
+}
+
+
 function optionById(category, id) {
   return OPTIONS[category].find((o) => o.id === id) || null;
 }
@@ -52,11 +59,56 @@ function previewText(sel) {
   return `Claimed identity: ${i}\nContext: ${c}\nTone: ${e}\nRequest: ${r}`;
 }
 
+function defaultDialogue({ identity, context, emotion, request, complied }) {
+  const i = identity?.label || "someone";
+  const c = context?.label || "a quick issue";
+  const e = emotion?.label || "neutral";
+  const r = request?.label || "help with something";
+
+  return [
+    { who: "Attacker", text: `Hi, I am ${i}.` },
+    { who: "Attacker", text: `${c}. I am keeping this ${e}.` },
+    { who: "Attacker", text: `Can you ${r}?` },
+    {
+      who: "Target",
+      text: complied
+        ? "Okay, what do you need?"
+        : "I need to verify this through official channels first."
+    }
+  ];
+}
+
 function evaluateScenario(scenario, sel) {
   const identity = optionById("identity", sel.identity);
   const context = optionById("context", sel.context);
   const emotion = optionById("emotion", sel.emotion);
   const request = optionById("request", sel.request);
+
+  // Only validate build selections (no verification in this phase)
+  const invalid = [];
+  for (const key of ["identity", "context", "emotion", "request"]) {
+    const allowedIds = scenario.allowed?.[key];
+    if (allowedIds && sel[key] && !allowedIds.includes(sel[key])) invalid.push(key);
+  }
+
+  if (invalid.length) {
+    const bestLabels = (scenario.bestVerification || [])
+      .map((id) => optionById("verification", id)?.label)
+      .filter(Boolean);
+
+    return {
+      preview: previewText(sel),
+      convincingScore: 0,
+      suspicion: [`Selections not allowed for this scenario: ${invalid.join(", ")}`],
+      targetWouldComply: false,
+      secureOutcome: true,
+      bestVerificationIds: scenario.bestVerification || [],
+      bestVerificationLabels: bestLabels,
+      dialogue: [{ who: "System", text: "That combination is not available in this scenario." }],
+      takeawayTitle: "Invalid selection",
+      takeawayBullets: ["Pick from the options shown for this round."]
+    };
+  }
 
   const suspicion = [];
   let score = 50;
@@ -72,6 +124,7 @@ function evaluateScenario(scenario, sel) {
   }
 
   if (identity?.tags.includes("authority")) score += 8;
+
   if (emotion?.tags.includes("pressure")) {
     score += 5;
     suspicion.push("Pressure tactics reduce verification and increase risk.");
@@ -95,172 +148,220 @@ function evaluateScenario(scenario, sel) {
   const contradictionsCount = context?.tags.includes("contradiction") ? 1 : 0;
   score = clamp(score, 0, 100);
 
-  const playerVerification = sel.verification;
-  const best = scenario.bestVerification;
-  const userPickedStopCorrectly = best.includes(playerVerification);
+  const targetWouldComply = score >= scenario.complianceThreshold && !contradictionsCount;
 
-  const wouldComplyIfNoVerify = score >= scenario.complianceThreshold && !contradictionsCount;
-  const targetVerifies = userPickedStopCorrectly;
+  const bestLabels = (scenario.bestVerification || [])
+    .map((id) => optionById("verification", id)?.label)
+    .filter(Boolean);
 
-  const complied = wouldComplyIfNoVerify && !targetVerifies;
-  const secureOutcome = !complied;
+  const dialogue =
+    typeof scenario.dialogue === "function"
+      ? scenario.dialogue({
+          identity,
+          context,
+          emotion,
+          request,
+          complied: targetWouldComply
+        })
+      : defaultDialogue({
+          identity,
+          context,
+          emotion,
+          request,
+          complied: targetWouldComply
+        });
 
-  const dialogue = [
-    { who: "Attacker", text: scenario.attackerLine(identity, context, emotion, request) },
-    {
-      who: "Target",
-      text: targetVerifies
-        ? scenario.verifyLine
-        : complied
-        ? scenario.complyLine
-        : scenario.resistLine
-    }
-  ];
-
-  const takeaway = scenario.takeaway({
-    score,
-    suspicion,
-    requestId: request?.id,
-    verified: targetVerifies
-  });
+  // Use scenario.takeaway if present, otherwise fallback
+  const takeaway =
+    typeof scenario.takeaway === "function"
+      ? scenario.takeaway({
+          score,
+          suspicion,
+          requestId: request?.id,
+          complied: targetWouldComply
+        })
+      : {
+          title: "Defensive takeaway",
+          bullets: ["Use independent verification for sensitive requests."]
+        };
 
   return {
     preview: previewText(sel),
     convincingScore: score,
     suspicion,
-    complied,
-    secureOutcome,
-    contradictionsCount,
-    userPickedStopCorrectly,
-    bestVerification: best.map((id) => optionById("verification", id)?.label).filter(Boolean),
-    playerVerificationLabel: optionById("verification", playerVerification)?.label ?? "None",
+    targetWouldComply,
+
+    // Before verification, secureOutcome means "they resist"
+    secureOutcome: !targetWouldComply,
+
+    bestVerificationIds: scenario.bestVerification || [],
+    bestVerificationLabels: bestLabels,
+
     dialogue,
+
     takeawayTitle: takeaway.title,
     takeawayBullets: takeaway.bullets
   };
 }
 
-export const PRETEXTING_CATEGORIES = [
-  { key: "identity", title: "Claimed identity", options: OPTIONS.identity },
-  { key: "context", title: "Context details", options: OPTIONS.context },
-  { key: "emotion", title: "Emotional tactic", options: OPTIONS.emotion },
-  { key: "request", title: "Requested action", options: OPTIONS.request },
-  { key: "verification", title: "Best verification step", options: OPTIONS.verification }
-];
+
+export function getPretextingCategoriesForScenario(scenario) {
+  return [
+    { key: "identity", title: "Claimed identity", options: scenarioOptions(scenario, "identity") },
+    { key: "context", title: "Context details", options: scenarioOptions(scenario, "context") },
+    { key: "emotion", title: "Emotional tactic", options: scenarioOptions(scenario, "emotion") },
+    { key: "request", title: "Requested action", options: scenarioOptions(scenario, "request") },
+    { key: "verification", title: "Best verification step", options: scenarioOptions(scenario, "verification") }
+  ];
+}
+
 
 export const PRETEXTING_SCENARIOS = [
   {
-    id: "s1_legit_baseline",
-    title: "Scenario 1: Legitimate request",
+    id: "s1_account_update",
+    title: "Scenario 1: Account update scam",
     prompt:
-      "A staff member contacts you for help accessing the helpdesk portal. The environment is normal and there is no emergency.",
-    complianceThreshold: 65,
-    bestVerification: ["ticket_portal"],
-    verifyLine: "No problem. I will check the ticket portal and follow the normal process.",
-    complyLine: "Sure, tell me what you need and I will do it now.",
-    resistLine: "I cannot do that without verification. Please use the official process.",
+      "You receive a message claiming to be IT support. They say your account needs an urgent update to avoid losing access.",
+    complianceThreshold: 68,
+    bestVerification: ["ticket_portal", "callback_official"],
+    allowed: {
+      identity: ["it_support", "contractor"],
+      context: ["specific_ticket", "vague_system"],
+      emotion: ["neutral", "urgency", "authority"],
+      request: ["confirm_details", "share_code"],
+      verification: ["ticket_portal", "callback_official", "refuse_sensitive"]
+    },
+    verifyLine: "I will verify through the ticket portal or call back via the official directory.",
+    complyLine: "Okay, I will read the code so this gets fixed quickly.",
+    resistLine: "I cannot share codes. Use the official support process.",
     attackerLine: (i, c, e, r) =>
-      `Hi, I am ${i?.label || "staff"}. ${c?.label || ""}. ${e?.label || "Neutral"}. Can you ${r?.label || "help"}?`,
+      `Hi, I am ${i?.label || "IT"}. ${c?.label || ""} ${e?.label || ""} Please ${r?.label || "help"} now.`,
     takeaway: ({ requestId, verified }) => {
       const bullets = [];
-      bullets.push("Legitimate requests still follow normal procedures.");
-      bullets.push("Verification should be routine, not confrontational.");
+      bullets.push("Account update scams often ask for codes or login details.");
+      bullets.push("Urgency is used to stop you checking legitimacy.");
       if (requestId === "share_code") bullets.push("One time codes should never be shared.");
-      if (verified) bullets.push("Using an official portal reduces social pressure and ambiguity.");
-      return { title: "Baseline behaviour", bullets };
+      if (verified) bullets.push("Official portals and call backs break the attacker’s control of the channel.");
+      return { title: "Account update patterns", bullets };
     }
   },
 
   {
-    id: "s2_weak_pretext",
-    title: "Scenario 2: Weak pretext",
+    id: "s2_invoice_scam",
+    title: "Scenario 2: Invoice scam",
     prompt:
-      "A stranger tries to sound official but their details are thin. Your goal is to notice what does not add up and choose the simplest safe check.",
-    complianceThreshold: 60,
-    bestVerification: ["callback_official", "refuse_sensitive"],
-    verifyLine: "I will call back using the official directory. I cannot proceed until I confirm identity.",
-    complyLine: "Okay, I guess that makes sense. I will do it quickly.",
-    resistLine: "This does not match normal procedure. Please contact the official channel.",
-    attackerLine: (i, c, e, r) =>
-      `Hello. I am ${i?.label || "someone"} and I need this urgently. ${c?.label || ""}. Can you ${r?.label || "help"}?`,
-    takeaway: ({ suspicion, verified }) => {
-      const bullets = [];
-      bullets.push("Weak stories rely on you filling gaps for them.");
-      if (suspicion.length) bullets.push("If details feel thin, pause and verify.");
-      if (verified) bullets.push("Official callback prevents you from being steered by the attacker.");
-      bullets.push("Refusing sensitive requests is appropriate until identity is confirmed.");
-      return { title: "Thin details and safe refusal", bullets };
-    }
-  },
-
-  {
-    id: "s3_authority_pressure",
-    title: "Scenario 3: Authority based pretext",
-    prompt:
-      "Someone claims a senior role and pushes you to skip steps. The aim is to see how authority plus urgency can disable critical thinking.",
-    complianceThreshold: 70,
+      "A message claims to be from a supplier and requests an urgent payment to a new bank account due to an 'account change'.",
+    complianceThreshold: 72,
     bestVerification: ["callback_official", "ask_manager"],
-    verifyLine: "I understand. I will check with a manager and call back via an official number.",
-    complyLine: "Right, understood. I will do it now.",
-    resistLine: "I cannot bypass the process. I will verify through the correct channels.",
+    allowed: {
+      identity: ["colleague", "contractor", "building_mgmt"],
+      context: ["specific_location", "name_drop", "vague_system"],
+      emotion: ["neutral", "urgency", "authority"],
+      request: ["confirm_details", "bypass_process"],
+      verification: ["callback_official", "ask_manager", "refuse_sensitive"]
+    },
+    verifyLine: "I will verify with finance or a manager and call back using known contact details.",
+    complyLine: "Understood. I will update the payment details and process it today.",
+    resistLine: "I cannot change payment details without verification from a known channel.",
     attackerLine: (i, c, e, r) =>
-      `This is ${i?.label || "a senior person"}. ${c?.label || ""}. ${e?.label || "Authority"}. I need you to ${r?.label || "help"} immediately.`,
+      `Hello, this is ${i?.label || "accounts"}. ${c?.label || ""} ${e?.label || ""} Can you ${r?.label || "help"}?`,
     takeaway: ({ verified }) => {
       const bullets = [];
-      bullets.push("Authority can make unsafe actions feel normal.");
-      bullets.push("Urgency is a common tool to stop verification.");
-      if (verified) bullets.push("Escalating through proper channels keeps you aligned with policy.");
-      bullets.push("If asked to bypass a step, treat it as a red flag.");
-      return { title: "Authority should not override process", bullets };
+      bullets.push("Invoice scams target payment processes, especially changes to bank details.");
+      bullets.push("The safest move is to verify using previously known contact information.");
+      if (verified) bullets.push("Manager or finance confirmation prevents rushed payment changes.");
+      return { title: "Invoice scam red flags", bullets };
     }
   },
 
   {
-    id: "s4_sympathy",
-    title: "Scenario 4: Sympathy based pretext",
+    id: "s3_job_offer",
+    title: "Scenario 3: Job offer scam",
     prompt:
-      "Someone asks for help using a personal story to reduce your guard. The goal is to support safely without breaking procedure.",
+      "A recruiter offers a job quickly and asks for personal details to 'finalise onboarding' without a proper interview.",
     complianceThreshold: 62,
-    bestVerification: ["ticket_portal", "refuse_sensitive"],
-    verifyLine: "I am sorry you are dealing with that. I can help through the official process only.",
-    complyLine: "Okay, I will do it for you this once.",
-    resistLine: "I cannot do that. Please use the official support route and I will assist there.",
+    bestVerification: ["refuse_sensitive", "callback_official"],
+    allowed: {
+      identity: ["event_staff", "contractor", "colleague"],
+      context: ["vague_system", "name_drop", "wrong_detail"],
+      emotion: ["familiarity", "urgency", "sympathy"],
+      request: ["share_personal", "confirm_details"],
+      verification: ["refuse_sensitive", "callback_official"]
+    },
+    verifyLine: "I will verify the company and recruiter via official channels and refuse sensitive details.",
+    complyLine: "Sure, here are my details so we can move forward.",
+    resistLine: "I will not share personal data until the offer is verified through official channels.",
     attackerLine: (i, c, e, r) =>
-      `Hi, I am ${i?.label || "someone"}. ${c?.label || ""}. ${e?.label || "Sympathy"}. Could you ${r?.label || "help"}?`,
+      `Hi, I am ${i?.label || "a recruiter"}. ${c?.label || ""} ${e?.label || ""} Please ${r?.label || "help"} today.`,
     takeaway: ({ verified }) => {
       const bullets = [];
-      bullets.push("Sympathy can be real, but procedures exist for a reason.");
-      bullets.push("Safe help means redirecting to official routes, not bending rules.");
-      if (verified) bullets.push("You can be kind while still verifying.");
-      bullets.push("Sensitive information sharing is never a valid shortcut.");
-      return { title: "Kindness plus boundaries", bullets };
+      bullets.push("Job offer scams pressure you into sharing identity or banking details.");
+      bullets.push("Real hiring processes rarely require urgent sensitive data upfront.");
+      if (verified) bullets.push("Verifying via official company pages and known contacts prevents impersonation.");
+      return { title: "Job offer scam patterns", bullets };
     }
   },
 
   {
-    id: "s5_mixed_advanced",
-    title: "Scenario 5: Advanced mixed pretext",
+    id: "s4_romance_social",
+    title: "Scenario 4: Romance and social scam",
     prompt:
-      "This attempt includes believable details but also a subtle inconsistency. Your job is to notice the mismatch and choose the correct verification step.",
-    complianceThreshold: 75,
-    bestVerification: ["callback_official", "ticket_portal"],
-    verifyLine: "I will verify via official channels first. If it is legitimate, the process will confirm it.",
-    complyLine: "That sounds detailed enough. I will do it now.",
-    resistLine: "Something does not match. I will verify through official channels before doing anything.",
+      "Someone builds rapport over time, then asks for help with access, money, or sensitive info framed as trust.",
+    complianceThreshold: 66,
+    bestVerification: ["refuse_sensitive", "ask_manager"],
+    allowed: {
+      identity: ["colleague", "delivery", "contractor"],
+      context: ["specific_location", "vague_system", "wrong_detail"],
+      emotion: ["familiarity", "sympathy", "fear"],
+      request: ["share_personal", "grant_access"],
+      verification: ["refuse_sensitive", "ask_manager"]
+    },
+    verifyLine: "I cannot do that. I will refuse and check with the proper authority if needed.",
+    complyLine: "Okay, I trust you. I will help this once.",
+    resistLine: "Even if we are friendly, I cannot share data or grant access.",
     attackerLine: (i, c, e, r) =>
-      `Hi, ${i?.label || "this is support"}. ${c?.label || ""}. ${e?.label || "Calm"}. Please ${r?.label || "help"} now.`,
-    takeaway: ({ suspicion, verified }) => {
+      `Hey, it is me. ${c?.label || ""} ${e?.label || ""} Can you ${r?.label || "help"}?`,
+    takeaway: ({ verified }) => {
       const bullets = [];
-      bullets.push("Strong pretexts mix credibility with pressure.");
-      if (suspicion.length) bullets.push("Small inconsistencies are worth slowing down for.");
-      if (verified) bullets.push("Official verification breaks the illusion of urgency.");
-      bullets.push("When risk is high, verification should be non optional.");
-      return { title: "Believable does not mean safe", bullets };
+      bullets.push("Romance and social scams use trust to bypass your normal caution.");
+      bullets.push("Friendliness is not verification.");
+      if (verified) bullets.push("Refusing sensitive requests is the safest default.");
+      return { title: "Trust is not proof", bullets };
+    }
+  },
+
+  {
+    id: "s5_government_irs",
+    title: "Scenario 5: IRS and government scam",
+    prompt:
+      "A caller claims to be from a government body and threatens consequences unless you act immediately.",
+    complianceThreshold: 75,
+    bestVerification: ["callback_official", "refuse_sensitive"],
+    allowed: {
+      identity: ["building_mgmt", "contractor", "it_support"],
+      context: ["name_drop", "vague_system", "wrong_detail"],
+      emotion: ["fear", "authority", "urgency"],
+      request: ["confirm_details", "share_personal", "bypass_process"],
+      verification: ["callback_official", "refuse_sensitive", "ask_manager"]
+    },
+    verifyLine: "I will call back using an official number and refuse to share personal details on this call.",
+    complyLine: "Okay, tell me what to do. I will provide the details now.",
+    resistLine: "I will not proceed through this channel. I will verify independently.",
+    attackerLine: (i, c, e, r) =>
+      `This is ${i?.label || "an official"}. ${c?.label || ""} ${e?.label || ""} You must ${r?.label || "comply"} now.`,
+    takeaway: ({ verified }) => {
+      const bullets = [];
+      bullets.push("Government scams lean on authority plus fear to short circuit thinking.");
+      bullets.push("Never treat threats as proof of legitimacy.");
+      if (verified) bullets.push("Independent call backs remove the attacker’s ability to control the conversation.");
+      return { title: "Authority plus fear", bullets };
     }
   }
 ];
+
 
 export function evaluatePretextingRound(roundIndex, selections) {
   const scenario = PRETEXTING_SCENARIOS[roundIndex];
   return evaluateScenario(scenario, selections);
 }
+
