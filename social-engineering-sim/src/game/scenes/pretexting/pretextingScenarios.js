@@ -10,19 +10,19 @@ const OPTIONS = {
     { id: "contractor", label: "External contractor", tags: ["neutral"] }
   ],
   context: [
-    { id: "specific_ticket", label: "Provides a ticket number and department name", tags: ["credible"] },
-    { id: "specific_location", label: "Mentions a real location and a routine process", tags: ["credible"] },
-    { id: "vague_system", label: "Mentions a system vaguely with no specifics", tags: ["vague"] },
-    { id: "name_drop", label: "Name drops a manager", tags: ["authority_boost"] },
-    { id: "wrong_detail", label: "Includes a detail that does not match the environment", tags: ["contradiction"] }
+    { id: "specific_ticket", label: "Provide a department name and service", tags: ["credible"] },
+    { id: "specific_location", label: "Mention a real location and a routine process", tags: ["credible"] },
+    { id: "vague_system", label: "Mention a system vaguely with no specifics", tags: ["vague"] },
+    { id: "name_drop", label: "Name drop a manager", tags: ["authority_boost"] },
+    { id: "wrong_detail", label: "Include a random detail", tags: ["contradiction"] }
   ],
   emotion: [
     { id: "neutral", label: "Neutral and calm", tags: ["neutral"] },
-    { id: "urgency", label: "Urgency and time pressure", tags: ["pressure"] },
-    { id: "authority", label: "Authority and confidence", tags: ["pressure", "authority"] },
+    { id: "urgency", label: "Urgenct and with time pressure", tags: ["pressure"] },
+    { id: "authority", label: "With authority and confidence", tags: ["pressure", "authority"] },
     { id: "sympathy", label: "Sympathy and personal appeal", tags: ["pressure"] },
-    { id: "fear", label: "Fear of consequences", tags: ["pressure"] },
-    { id: "familiarity", label: "Friendly familiarity", tags: ["familiar"] }
+    { id: "fear", label: "Play on the fear of consequences", tags: ["pressure"] },
+    { id: "familiarity", label: "Friendly", tags: ["familiar"] }
   ],
   request: [
     { id: "confirm_details", label: "Confirm account details", tags: ["medium_risk"] },
@@ -32,7 +32,7 @@ const OPTIONS = {
     { id: "grant_access", label: "Grant physical or system access", tags: ["high_risk"] }
   ],
   verification: [
-    { id: "callback_official", label: "Call back using an official directory number" },
+    { id: "callback_official", label: "Call back using an official number" },
     { id: "ticket_portal", label: "Verify via the official ticket or request portal" },
     { id: "ask_manager", label: "Check with a manager or reception first" },
     { id: "refuse_sensitive", label: "Refuse sensitive data sharing and redirect to policy" }
@@ -60,23 +60,117 @@ function previewText(sel) {
 }
 
 function defaultDialogue({ identity, context, emotion, request, complied }) {
-  const i = identity?.label || "someone";
-  const c = context?.label || "a quick issue";
-  const e = emotion?.label || "neutral";
-  const r = request?.label || "help with something";
+  const iId = identity?.id;
+  const cId = context?.id;
+  const eId = emotion?.id;
+  const rId = request?.id;
+
+  const who = "Attacker (You)";
+
+  const identityOpen = {
+    it_support: "Hi, IT here.",
+    building_mgmt: "Hi, building management here.",
+    delivery: "Hi, delivery downstairs.",
+    event_staff: "Hi, events team here.",
+    colleague: "Hey, it’s me from work.",
+    contractor: "Hi, I’m a contractor on site."
+  };
+
+  const contextBit = {
+    specific_ticket: "It’s about a request for your department.",
+    specific_location: "I’m at the entrance doing the usual sign in stuff.",
+    vague_system: "There’s something odd showing on the system.",
+    name_drop: "Your manager asked me to get this sorted today.",
+    wrong_detail: "Quick one, I might have the department name slightly wrong."
+  };
+
+  // Keep emotion subtle so it does not sound like a roleplay prompt
+  const toneTag = {
+    neutral: "",
+    urgency: "I’m a bit tight on time.",
+    authority: "I need this done now.",
+    sympathy: "Sorry, I know it’s annoying.",
+    fear: "If we leave it, it could cause problems.",
+    familiarity: "Cheers, appreciate it."
+  };
+
+  const ask = (() => {
+    switch (rId) {
+      case "confirm_details":
+        return "Can you just confirm a couple of details for me?";
+      case "share_personal":
+        return "Can you send over your details so I can finish this?";
+      case "bypass_process":
+        return "Can we skip the usual steps this once and just get it done?";
+      case "grant_access":
+        return "Can you grant me access so I can sort this?";
+      case "share_code":
+        // If this still exists anywhere, keep it supported
+        return "Can you read out the one time code you’ve just received?";
+      default:
+        return "Can you help me with something quickly?";
+    }
+  })();
+
+  const resist = (() => {
+    // React to weak context without sounding robotic
+    const needsRef =
+      cId === "vague_system" ? "Which system is it, and what’s the reference?" :
+      cId === "wrong_detail" ? "Which department is this meant to be for?" :
+      "What’s the ticket or reference number?";
+
+    switch (rId) {
+      case "grant_access":
+        return `I can’t grant access like that. ${needsRef} I’ll verify it first.`;
+      case "bypass_process":
+        return "I can’t bypass the process. Put it through properly and I’ll take a look.";
+      case "share_personal":
+        return "I’m not sharing personal details on this. I’ll verify first.";
+      case "confirm_details":
+        return `Before I confirm anything, ${needsRef} I’ll check it on the proper channel.`;
+      case "share_code":
+        return "I can’t share codes. If it’s real, it needs to go through the official process.";
+      default:
+        return "I’ll need to verify this first.";
+    }
+  })();
+
+  const comply = (() => {
+    switch (rId) {
+      case "grant_access":
+        return "Alright. What access do you need exactly?";
+      case "bypass_process":
+        return "Okay, just tell me what you want me to do.";
+      case "share_personal":
+        return "Okay, what details do you need?";
+      case "confirm_details":
+        return "Yeah, sure. What do you need to confirm?";
+      case "share_code":
+        return "Okay, I’ve got it here.";
+      default:
+        return "Okay, go on.";
+    }
+  })();
+
+  const line1Parts = [
+    identityOpen[iId] || "Hi.",
+    contextBit[cId] || "Quick one.",
+    toneTag[eId] || ""
+  ].filter(Boolean);
+
+  const line1 = line1Parts.join(" ");
+  const line2 = ask;
+  const line3 = complied ? comply : resist;
 
   return [
-    { who: "Attacker", text: `Hi, I am ${i}.` },
-    { who: "Attacker", text: `${c}. I am keeping this ${e}.` },
-    { who: "Attacker", text: `Can you ${r}?` },
-    {
-      who: "Target",
-      text: complied
-        ? "Okay, what do you need?"
-        : "I need to verify this through official channels first."
-    }
+    { who, text: line1 },
+    { who, text: line2 },
+    { who: "Target", text: line3 }
   ];
 }
+
+
+
 
 function evaluateScenario(scenario, sel) {
   const identity = optionById("identity", sel.identity);
@@ -221,26 +315,27 @@ export const PRETEXTING_SCENARIOS = [
     id: "s1_account_update",
     title: "Scenario 1: Account update scam",
     prompt:
-      "You receive a message claiming to be IT support. They say your account needs an urgent update to avoid losing access.",
+      "How would you try get access to someones account details.",
     complianceThreshold: 68,
     bestVerification: ["ticket_portal", "callback_official"],
     allowed: {
       identity: ["it_support", "contractor"],
       context: ["specific_ticket", "vague_system"],
       emotion: ["neutral", "urgency", "authority"],
-      request: ["confirm_details", "share_code"],
+      request: ["confirm_details", "grant_access"],
       verification: ["ticket_portal", "callback_official", "refuse_sensitive"]
     },
-    verifyLine: "I will verify through the ticket portal or call back via the official directory.",
-    complyLine: "Okay, I will read the code so this gets fixed quickly.",
-    resistLine: "I cannot share codes. Use the official support process.",
+    verifyLine: "I will verify through the ticket portal or call back via the official number.",
+    complyLine: "Okay, I will grant access so this gets fixed quickly.",
+    resistLine: "I cannot grant access without going through the proper process.",
     attackerLine: (i, c, e, r) =>
       `Hi, I am ${i?.label || "IT"}. ${c?.label || ""} ${e?.label || ""} Please ${r?.label || "help"} now.`,
     takeaway: ({ requestId, verified }) => {
       const bullets = [];
       bullets.push("Account update scams often ask for codes or login details.");
       bullets.push("Urgency is used to stop you checking legitimacy.");
-      if (requestId === "share_code") bullets.push("One time codes should never be shared.");
+      if (requestId === "grant_access")
+        bullets.push("Access should only be granted through verified and logged processes.");
       if (verified) bullets.push("Official portals and call backs break the attacker’s control of the channel.");
       return { title: "Account update patterns", bullets };
     }
@@ -250,7 +345,7 @@ export const PRETEXTING_SCENARIOS = [
     id: "s2_invoice_scam",
     title: "Scenario 2: Invoice scam",
     prompt:
-      "A message claims to be from a supplier and requests an urgent payment to a new bank account due to an 'account change'.",
+      "How would you try to convince someone to send you money for a 'order'.",
     complianceThreshold: 72,
     bestVerification: ["callback_official", "ask_manager"],
     allowed: {
@@ -278,7 +373,7 @@ export const PRETEXTING_SCENARIOS = [
     id: "s3_job_offer",
     title: "Scenario 3: Job offer scam",
     prompt:
-      "A recruiter offers a job quickly and asks for personal details to 'finalise onboarding' without a proper interview.",
+      "How would you get someones personal details pretending to be a recruiter.",
     complianceThreshold: 62,
     bestVerification: ["refuse_sensitive", "callback_official"],
     allowed: {
@@ -306,7 +401,7 @@ export const PRETEXTING_SCENARIOS = [
     id: "s4_romance_social",
     title: "Scenario 4: Romance and social scam",
     prompt:
-      "Someone builds rapport over time, then asks for help with access, money, or sensitive info framed as trust.",
+      "You've been speaking to this person for a while already. How would you seal the deal and get sensitive information or given private access.",
     complianceThreshold: 66,
     bestVerification: ["refuse_sensitive", "ask_manager"],
     allowed: {
@@ -334,7 +429,7 @@ export const PRETEXTING_SCENARIOS = [
     id: "s5_government_irs",
     title: "Scenario 5: IRS and government scam",
     prompt:
-      "A caller claims to be from a government body and threatens consequences unless you act immediately.",
+      "You're pretending to be in a position of power to get sensitive information.",
     complianceThreshold: 75,
     bestVerification: ["callback_official", "refuse_sensitive"],
     allowed: {

@@ -33,7 +33,7 @@ export default function PretextingBuilder({ onFinish }) {
 
   const verificationChoice = usePretextingStore((s) => s.verificationChoice);
   const setVerificationChoice = usePretextingStore(
-    (s) => s.setVerificationChoice
+    (s) => s.setVerificationChoice,
   );
   const applyVerification = usePretextingStore((s) => s.applyVerification);
 
@@ -47,12 +47,12 @@ export default function PretextingBuilder({ onFinish }) {
 
   // Phase 1 categories: everything except verification
   const buildCategories = getPretextingCategoriesForScenario(scenario).filter(
-    (c) => c.key !== "verification"
+    (c) => c.key !== "verification",
   );
 
   // Phase 2 categories: only verification
   const verificationCategory = getPretextingCategoriesForScenario(
-    scenario
+    scenario,
   ).find((c) => c.key === "verification");
 
   const verificationApplied = Boolean(roundResult?.verificationApplied);
@@ -67,7 +67,7 @@ export default function PretextingBuilder({ onFinish }) {
   const [charIdx, setCharIdx] = useState(0);
   const chosenVerificationLabel =
     (verificationCategory?.options || []).find(
-      (o) => o.id === verificationChoice
+      (o) => o.id === verificationChoice,
     )?.label || "None";
 
   // Reset typing when entering reveal phase or when scenario changes
@@ -280,7 +280,7 @@ export default function PretextingBuilder({ onFinish }) {
                     if (!dialogue.length) return;
                     setLineIdx(dialogue.length - 1);
                     setCharIdx(
-                      (dialogue[dialogue.length - 1].text || "").length
+                      (dialogue[dialogue.length - 1].text || "").length,
                     );
                   }}
                   className={[
@@ -345,8 +345,33 @@ export default function PretextingBuilder({ onFinish }) {
                 </div>
               )}
             </div>
+            {dialogueDone && roundResult?.targetWouldComply && (
+              <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-3">
+                <div className="text-sm text-slate-300 font-semibold">
+                  What the target could have done to verify
+                </div>
 
-            {!verificationApplied ? (
+                <ul className="list-disc list-inside text-sm text-slate-300 space-y-1">
+                  {(roundResult.bestVerificationLabels || []).map(
+                    (label, i) => (
+                      <li key={i}>{label}</li>
+                    ),
+                  )}
+                </ul>
+
+                {scenario.verifyLine && (
+                  <p className="text-xs text-slate-400">
+                    {scenario.verifyLine}
+                  </p>
+                )}
+
+                <p className="text-xs text-slate-400">
+                  This step breaks the attacker’s control of the interaction.
+                </p>
+              </div>
+            )}
+
+            {false && !verificationApplied ? (
               <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-3">
                 <div className="text-sm text-slate-300 font-semibold">
                   What verification step is necessary?
