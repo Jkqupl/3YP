@@ -237,3 +237,21 @@ export default function PhishingModule() {
     </div>
   );
 }
+// import React from "react";
+// import { EMAILS } from "../data/emails";
+// import EmailIframeViewer from "../components/EmailIframeViewer";
+
+// export default function PhishingModule() {
+//   const email = EMAILS[2];
+
+//   return (
+//     <div className="h-screen bg-slate-950 p-6">
+//       <div className="max-w-4xl mx-auto h-full bg-slate-900 rounded-xl p-4">
+//         <div className="text-slate-100 mb-2 font-semibold">{email.subject}</div>
+//         <div className="h-[80vh] border border-slate-800 rounded-lg overflow-hidden">
+//           <EmailIframeViewer html={email.html} />
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }

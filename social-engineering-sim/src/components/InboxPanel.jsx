@@ -2,44 +2,36 @@ import React from "react";
 import { useGameStore } from "../state/useGameStore";
 
 export default function InboxPanel() {
-  const day = useGameStore((state) => state.day);
-  const inbox = useGameStore((state) => state.inbox[day] || []);
-  const currentEmailId = useGameStore((state) => state.currentEmailId);
-  const selectEmail = useGameStore((state) => state.selectEmail);
+  const emails = useGameStore((s) => s.emails);
+  const currentEmailId = useGameStore((s) => s.currentEmailId);
+  const setCurrentEmailId = useGameStore((s) => s.setCurrentEmailId);
 
   return (
-    <div className="h-full flex flex-col bg-slate-900/80 border border-cyan-700 rounded-lg overflow-hidden">
-      <div className="px-3 py-2 border-b border-cyan-700 bg-slate-950/80">
-        <p className="text-xs uppercase tracking-wide text-cyan-400">
-          Inbox - Day {day}
-        </p>
-      </div>
+    <div className="h-full overflow-auto border-r border-slate-800">
+      <div className="px-4 py-3 text-slate-200 font-semibold">Inbox</div>
 
-      <div className="flex-1 overflow-y-auto">
-        {inbox.length === 0 && (
-          <p className="text-sm text-slate-500 p-3">No messages.</p>
-        )}
-
-        {inbox.map((email) => {
-          const isActive = currentEmailId === email.id;
-          const isPhish = email.type === "phish";
-
+      <div className="space-y-1 px-2 pb-3">
+        {emails.map((e) => {
+          const active = e.id === currentEmailId;
           return (
             <button
-              key={email.id}
-              onClick={() => selectEmail(email.id)}
+              key={e.id}
+              onClick={() => setCurrentEmailId(e.id)}
               className={[
-                "w-full text-left px-3 py-2 border-b border-slate-800 flex items-center gap-2",
-                isActive ? "bg-cyan-900/40" : "hover:bg-slate-800/60",
+                "w-full text-left rounded-lg px-3 py-2 border transition",
+                active
+                  ? "border-cyan-400 bg-cyan-500/10 text-slate-100"
+                  : "border-slate-800 bg-slate-950 text-slate-200 hover:bg-slate-900/50",
               ].join(" ")}
             >
-              <span
-                className={
-                  "inline-block w-2 h-2 rounded-full " +
-                  (isPhish ? "bg-amber-400" : "bg-emerald-400")
-                }
-              />
-              <span className="text-xs text-slate-300">{email.subject}</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="truncate font-medium">{e.fromName}</div>
+                <div className="text-xs text-slate-400">{e.time}</div>
+              </div>
+              <div className="truncate text-sm text-slate-300">{e.subject}</div>
+              <div className="truncate text-xs text-slate-500">
+                {e.fromEmail}
+              </div>
             </button>
           );
         })}

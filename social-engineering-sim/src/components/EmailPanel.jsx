@@ -1,117 +1,53 @@
-import React from "react";
+import React, { useState } from "react";
 import { useGameStore } from "../state/useGameStore";
-import PhaserSimulation from "../game/PhaserSimulation";
+import EmailIframeViewer from "./EmailIframeViewer";
 
 export default function EmailPanel() {
-  const day = useGameStore((state) => state.day);
-  const simulationMode = useGameStore((state) => state.simulationMode);
+  const emails = useGameStore((s) => s.emails);
+  const currentEmailId = useGameStore((s) => s.currentEmailId);
 
-  const email = useGameStore((state) => {
-    const list = state.inbox[state.day] || [];
-    return list.find((e) => e.id === state.currentEmailId) || null;
-  });
+  const [urlPreview, setUrlPreview] = useState(null);
 
-  const deleteEmail = useGameStore((state) => state.deleteEmail);
-  const handleDanceLegit = useGameStore((state) => state.handleDanceLegit);
-  const startSimulation = useGameStore((state) => state.startSimulation);
+  const email = emails.find((e) => e.id === currentEmailId);
 
-  if (simulationMode) {
+  if (!email) {
     return (
-      <div className="h-full bg-slate-900/80 border border-cyan-700 rounded-lg flex flex-col overflow-hidden">
-        <div className="px-3 py-2 border-b border-cyan-700 bg-slate-950/80">
-          <p className="text-xs uppercase tracking-wide text-cyan-400">
-            Simulation - {simulationMode === "gmail" && "Gmail login"}
-            {simulationMode === "amazon" && "Amazon receipt"}
-            {simulationMode === "dance" && "Dance registration"}
-          </p>
-        </div>
-
-        <div className="w-full h-full min-h-[320px] flex items-center justify-center">
-          <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-            <PhaserSimulation mode={simulationMode} />
-          </div>
-        </div>
+      <div className="h-full flex items-center justify-center text-slate-400">
+        Select an email
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-slate-900/80 border border-cyan-700 rounded-lg overflow-hidden flex flex-col">
-      <div className="px-3 py-2 border-b border-cyan-700 bg-slate-950/80 flex justify-between">
-        <p className="text-xs uppercase tracking-wide text-cyan-400">
-          Email view
-        </p>
-        <p className="text-xs text-slate-500">Day {day}</p>
+    <div className="h-full flex flex-col gap-3 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-slate-100 font-semibold truncate">
+            {email.subject}
+          </div>
+          <div className="text-sm text-slate-400">
+            {email.fromName} &lt;{email.fromEmail}&gt;
+            {email.replyTo && email.replyTo !== email.fromEmail ? (
+              <> • Reply-To: {email.replyTo}</>
+            ) : null}{" "}
+            • {email.time}
+          </div>
+        </div>
+
+        {urlPreview?.href ? (
+          <div className="text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 max-w-md">
+            <div className="text-slate-400">URL preview</div>
+            <div className="break-all">{urlPreview.href}</div>
+          </div>
+        ) : null}
       </div>
 
-      <div className="flex-1 p-4 flex flex-col gap-3">
-        {!email && (
-          <p className="text-sm text-slate-400">
-            Select an email to view its contents.
-          </p>
-        )}
-
-        {email && (
-          <>
-            <h2 className="text-lg text-slate-100">{email.subject}</h2>
-            <p className="text-xs text-slate-400 mb-3">
-              Type:{" "}
-              {email.type === "phish" ? "Potential phishing" : "Legitimate"}
-            </p>
-
-            {email.id === "gmail" && (
-              <p className="text-sm text-slate-200 max-w-xl">
-                The security alert may lead to a fake login page designed to
-                steal credentials.
-              </p>
-            )}
-
-            {email.id === "amazon" && (
-              <p className="text-sm text-slate-200 max-w-xl">
-                The order number does not match any actual previous purchases,
-                which is suspicious.
-              </p>
-            )}
-
-            {/* Action buttons */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                onClick={() => deleteEmail(email.id)}
-                className="px-3 py-1.5 text-xs rounded bg-rose-500 hover:bg-rose-400 text-slate-950 font-semibold"
-              >
-                Delete email
-              </button>
-
-              {/* Email body text */}
-              {email.id === "dance" && (
-                <button
-                  onClick={() => startSimulation("dance")}
-                  className="px-3 py-1.5 text-xs rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold"
-                >
-                  View registration link
-                </button>
-              )}
-
-              {email.id === "gmail" && (
-                <button
-                  onClick={() => startSimulation("gmail")}
-                  className="px-3 py-1.5 text-xs rounded bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold"
-                >
-                  View alert link
-                </button>
-              )}
-
-              {email.id === "amazon" && (
-                <button
-                  onClick={() => startSimulation("amazon")}
-                  className="px-3 py-1.5 text-xs rounded bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold"
-                >
-                  Inspect order number
-                </button>
-              )}
-            </div>
-          </>
-        )}
+      <div className="flex-1 min-h-0 border border-slate-800 rounded-lg overflow-hidden bg-white">
+        <EmailIframeViewer
+          html={email.html}
+          onLinkHover={(info) => setUrlPreview(info)}
+          onLinkClick={(info) => setUrlPreview(info)}
+        />
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
 import { create } from "zustand"
+import { EMAILS } from "../data/emails";
+
 
 const initialInbox = () => ({
   1: [
@@ -24,6 +26,12 @@ export const useGameStore = create((set, get) => ({
 
   failReason: "",
   ending: null, // "fail" | "good" | "perfect" | null
+
+  emails: EMAILS,
+  currentEmailId: EMAILS[0]?.id ?? null,
+
+  setCurrentEmailId: (id) => set({ currentEmailId: id }),
+
 
   // helpers
   getCurrentEmail() {
