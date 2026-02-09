@@ -1,21 +1,55 @@
 import React, { useEffect, useMemo, useState } from "react";
 
-export default function EmailIframeViewer({ html, onLoad }) {
+export default function EmailIframeViewer({
+  html,
+  onLoad,
+  onLinkHover,
+  onLinkClick,
+}) {
   const [loaded, setLoaded] = useState(false);
 
   // Reset loader when switching emails
   useEffect(() => {
-    setLoaded(false);
-  }, [html]);
+    function handler(e) {
+      if (e.data?.type === "EMAIL_LINK_EVENT") {
+        onLinkHover?.({ href: e.data.href });
+        onLinkClick?.({ href: e.data.href });
+      }
+    }
+
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [onLinkHover, onLinkClick]);
 
   const srcDoc = useMemo(() => {
     if (!html) return "<!doctype html><html><body></body></html>";
 
     const interceptScript = `
 <script>
-  document.addEventListener("click", function (e) {
+  function sendLinkInfo(e) {
+    const a = e.target.closest('a');
+    if (!a) return;
+
+    const href = a.getAttribute('href') || '';
+
+    window.parent.postMessage(
+      { type: 'EMAIL_LINK_EVENT', href: href },
+      '*'
+    );
+  }
+
+  document.addEventListener('mouseover', function(e) {
+    const a = e.target.closest('a');
+    if (!a) return;
+    sendLinkInfo(e);
+  });
+
+  document.addEventListener('click', function(e) {
+    const a = e.target.closest('a');
+    if (!a) return;
     e.preventDefault();
     e.stopPropagation();
+    sendLinkInfo(e);
   }, true);
 </script>
 `;

@@ -13,24 +13,28 @@ const initialInbox = () => ({
 })
 
 export const useGameStore = create((set, get) => ({
-  day: 1,
-  inbox: initialInbox(),
-  currentEmailId: null,
-  simulationMode: null, // "gmail" | "amazon" | "dance" | null
+  // day: 1,
+  // inbox: initialInbox(),
+  // currentEmailId: null,
+  // simulationMode: null, // "gmail" | "amazon" | "dance" | null
 
-  // flags
-  danceLegitVisited: false,
-  danceDeleted: false,
-  gmailResolvedSafely: false,
-  amazonResolvedSafely: false,
+  // // flags
+  // danceLegitVisited: false,
+  // danceDeleted: false,
+  // gmailResolvedSafely: false,
+  // amazonResolvedSafely: false,
 
-  failReason: "",
-  ending: null, // "fail" | "good" | "perfect" | null
+  // failReason: "",
+  // ending: null, // "fail" | "good" | "perfect" | null
+  
+  userDecisions: {},
 
   emails: EMAILS,
   currentEmailId: EMAILS[0]?.id ?? null,
 
   setCurrentEmailId: (id) => set({ currentEmailId: id }),
+
+  
 
 
   // helpers
@@ -45,135 +49,188 @@ export const useGameStore = create((set, get) => ({
     set({ currentEmailId: id })
   },
 
-  deleteEmail(id) {
-    const { day, inbox } = get()
-    const newInbox = { ...inbox }
-    newInbox[day] = (newInbox[day] || []).filter(e => e.id !== id)
+  setDecision: (emailId, decision) =>
+    set((state) => ({
+      userDecisions: {
+        ...state.userDecisions,
+        [emailId]: decision,
+      },
+    })),
 
-    const updates = { inbox: newInbox }
+  resetDecisions: () => set({ userDecisions: {} }),
 
-    if (id === "dance") {
-      updates.danceDeleted = true
-    }
-    if (id === "gmail") {
-      updates.gmailResolvedSafely = true
-    }
-    if (id === "amazon") {
-      updates.amazonResolvedSafely = true
-    }
+  getScore: () => {
+    const { emails, userDecisions } = get();
 
-    set(updates)
-    get().maybeAdvanceDay()
-    get().maybeSetEnding()
-  },
+    let correct = 0;
 
- setDanceVisited() {
-  const { inbox } = get()
-  const newInbox = { ...inbox }
-  newInbox[1] = (newInbox[1] || []).filter(e => e.id !== "dance")
-
-  set({
-    inbox: newInbox,
-    danceLegitVisited: true
-  })
-
-  get().maybeAdvanceDay()
-},
-
-
-  handleGmailSafe() {
-    const { inbox } = get()
-    const newInbox = { ...inbox }
-    newInbox[1] = (newInbox[1] || []).filter(e => e.id !== "gmail")
-
-    set({
-      inbox: newInbox,
-      gmailResolvedSafely: true
-    })
-
-    get().maybeAdvanceDay()
-  },
-
-  handleAmazonSafe() {
-    const { inbox } = get()
-    const newInbox = { ...inbox }
-    newInbox[2] = (newInbox[2] || []).filter(e => e.id !== "amazon")
-
-    set({
-      inbox: newInbox,
-      amazonResolvedSafely: true
-    })
-
-    get().maybeSetEnding()
-  },
-
-  startSimulation(mode) {
-    set({ simulationMode: mode })
-  },
-
-  endSimulation() {
-    set({ simulationMode: null })
-  },
-
-  setFail(reason) {
-    set({
-      failReason: reason,
-      ending: "fail",
-      simulationMode: null
-    })
-  },
-
-  maybeAdvanceDay() {
-    const {
-      day,
-      danceLegitVisited,
-      danceDeleted,
-      gmailResolvedSafely
-    } = get()
-
-    if (day === 1) {
-      const danceHandled = danceLegitVisited || danceDeleted
-      if (danceHandled && gmailResolvedSafely) {
-        set({ day: 2, currentEmailId: null })
+    for (const e of emails) {
+      if (userDecisions[e.id] === e.groundTruth) {
+        correct++;
       }
     }
+
+    return {
+      correct,
+      total: emails.length,
+      percent: Math.round((correct / emails.length) * 100),
+    };
   },
 
-  maybeSetEnding() {
-    const {
-      day,
-      danceLegitVisited,
-      danceDeleted,
-      gmailResolvedSafely,
-      amazonResolvedSafely,
-      ending
-    } = get()
+  decideAndNext: (emailId, decision) =>
+  set((state) => {
+    const userDecisions = { ...state.userDecisions, [emailId]: decision };
 
-    if (ending) return
-    if (day !== 2 || !amazonResolvedSafely) return
+    // Find next email (wrap around)
+    const idx = state.emails.findIndex((e) => e.id === state.currentEmailId);
+    const next =
+      idx >= 0 && state.emails.length > 0
+        ? state.emails[(idx + 1) % state.emails.length].id
+        : state.currentEmailId;
 
-    if (danceLegitVisited && !danceDeleted && gmailResolvedSafely) {
-      set({ ending: "perfect" })
-      return
-    }
+    return {
+      userDecisions,
+      currentEmailId: next,
+    };
+  }),
 
-    if (danceDeleted && gmailResolvedSafely) {
-      set({ ending: "good" })
-    }
-  },
+  resetGame: () =>
+  set((state) => ({
+    userDecisions: {},
+    currentEmailId: state.emails[0]?.id ?? null,
+  })),
 
-  resetGame() {
-    set({
-      day: 1,
-      inbox: initialInbox(),
-      currentEmailId: null,
-      simulationMode: null,
-      danceLegitVisited: false,
-      danceDeleted: false,
-      gmailResolvedSafely: false,
-      amazonResolvedSafely: false,
-      failReason: "",
-      ending: null
-    })
-  }
+
+
+//   deleteEmail(id) {
+//     const { day, inbox } = get()
+//     const newInbox = { ...inbox }
+//     newInbox[day] = (newInbox[day] || []).filter(e => e.id !== id)
+
+//     const updates = { inbox: newInbox }
+
+//     if (id === "dance") {
+//       updates.danceDeleted = true
+//     }
+//     if (id === "gmail") {
+//       updates.gmailResolvedSafely = true
+//     }
+//     if (id === "amazon") {
+//       updates.amazonResolvedSafely = true
+//     }
+
+//     set(updates)
+//     get().maybeAdvanceDay()
+//     get().maybeSetEnding()
+//   },
+
+//  setDanceVisited() {
+//   const { inbox } = get()
+//   const newInbox = { ...inbox }
+//   newInbox[1] = (newInbox[1] || []).filter(e => e.id !== "dance")
+
+//   set({
+//     inbox: newInbox,
+//     danceLegitVisited: true
+//   })
+
+//   get().maybeAdvanceDay()
+// },
+
+
+//   handleGmailSafe() {
+//     const { inbox } = get()
+//     const newInbox = { ...inbox }
+//     newInbox[1] = (newInbox[1] || []).filter(e => e.id !== "gmail")
+
+//     set({
+//       inbox: newInbox,
+//       gmailResolvedSafely: true
+//     })
+
+//     get().maybeAdvanceDay()
+//   },
+
+//   handleAmazonSafe() {
+//     const { inbox } = get()
+//     const newInbox = { ...inbox }
+//     newInbox[2] = (newInbox[2] || []).filter(e => e.id !== "amazon")
+
+//     set({
+//       inbox: newInbox,
+//       amazonResolvedSafely: true
+//     })
+
+//     get().maybeSetEnding()
+//   },
+
+//   startSimulation(mode) {
+//     set({ simulationMode: mode })
+//   },
+
+//   endSimulation() {
+//     set({ simulationMode: null })
+//   },
+
+//   setFail(reason) {
+//     set({
+//       failReason: reason,
+//       ending: "fail",
+//       simulationMode: null
+//     })
+//   },
+
+//   maybeAdvanceDay() {
+//     const {
+//       day,
+//       danceLegitVisited,
+//       danceDeleted,
+//       gmailResolvedSafely
+//     } = get()
+
+//     if (day === 1) {
+//       const danceHandled = danceLegitVisited || danceDeleted
+//       if (danceHandled && gmailResolvedSafely) {
+//         set({ day: 2, currentEmailId: null })
+//       }
+//     }
+//   },
+
+//   maybeSetEnding() {
+//     const {
+//       day,
+//       danceLegitVisited,
+//       danceDeleted,
+//       gmailResolvedSafely,
+//       amazonResolvedSafely,
+//       ending
+//     } = get()
+
+//     if (ending) return
+//     if (day !== 2 || !amazonResolvedSafely) return
+
+//     if (danceLegitVisited && !danceDeleted && gmailResolvedSafely) {
+//       set({ ending: "perfect" })
+//       return
+//     }
+
+//     if (danceDeleted && gmailResolvedSafely) {
+//       set({ ending: "good" })
+//     }
+//   },
+
+  // resetGame() {
+  //   set({
+  //     day: 1,
+  //     inbox: initialInbox(),
+  //     currentEmailId: null,
+  //     simulationMode: null,
+  //     danceLegitVisited: false,
+  //     danceDeleted: false,
+  //     gmailResolvedSafely: false,
+  //     amazonResolvedSafely: false,
+  //     failReason: "",
+  //     ending: null
+  //   })
+  // }
 }))

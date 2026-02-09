@@ -117,10 +117,6 @@ export default function Home() {
             ))}
           </div>
         </section>
-
-        <footer className="text-center text-xs text-slate-500 pt-2">
-          Educational simulator only. No real messages are sent.
-        </footer>
       </div>
     </div>
   );
