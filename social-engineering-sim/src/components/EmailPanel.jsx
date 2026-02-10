@@ -17,19 +17,18 @@ export default function EmailPanel() {
   const allAnswered = emails.every((e) => userDecisions[e.id]);
 
   const email = emails.find((e) => e.id === currentEmailId);
+  const handleLinkHover = () => {};
 
-  const handleLinkInfo = (info, { pinned = false } = {}) => {
+  const handleLinkClick = (info) => {
     setUrlPreview(info);
 
     if (previewTimeout.current) {
       clearTimeout(previewTimeout.current);
     }
 
-    if (!pinned) {
-      previewTimeout.current = setTimeout(() => {
-        setUrlPreview(null);
-      }, 2000);
-    }
+    previewTimeout.current = setTimeout(() => {
+      setUrlPreview(null);
+    }, 2000);
   };
 
   if (!email) {
@@ -137,8 +136,8 @@ export default function EmailPanel() {
       <div className="flex-1 min-h-0 border border-slate-800 rounded-lg overflow-hidden bg-white">
         <EmailIframeViewer
           html={email.html}
-          onLinkHover={(info) => handleLinkInfo(info)}
-          onLinkClick={(info) => handleLinkInfo(info, { pinned: true })}
+          onLinkHover={handleLinkHover}
+          onLinkClick={handleLinkClick}
         />
       </div>
     </div>

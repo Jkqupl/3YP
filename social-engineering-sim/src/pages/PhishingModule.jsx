@@ -189,18 +189,26 @@ export default function PhishingModule() {
           <h2 className="text-xl font-semibold text-cyan-300">
             Scenario overview
           </h2>
+
           <p className="text-sm text-slate-300">
-            You will play as an employee using a corporate inbox. During the
-            scenario you will receive a mix of legitimate and malicious emails:
-            a real dance competition registration, a fake Gmail security alert,
-            and a suspicious Amazon receipt. Your decisions determine whether
-            your account stays secure or is compromised.
+            You are an employee using a corporate inbox. You will receive a mix
+            of legitimate and malicious emails, including account confirmations,
+            password resets, invoices, shared documents, and crypto wallet
+            alerts. Your task is to decide whether each email is safe or a
+            phishing attempt, then respond accordingly.
           </p>
+
           <ul className="text-sm text-slate-300 list-disc list-inside space-y-1">
-            <li>Correctly handle the legitimate dance email.</li>
-            <li>Avoid entering credentials on fake login pages.</li>
             <li>
-              Check order numbers and details before downloading attachments.
+              Inspect links by clicking them to reveal the full destination URL.
+            </li>
+            <li>
+              Check sender addresses for unusual spellings, mismatched domains,
+              or odd formatting.
+            </li>
+            <li>
+              Look for pressure tactics, inconsistencies, and grammar or
+              formatting mistakes.
             </li>
           </ul>
         </section>
@@ -237,21 +245,3 @@ export default function PhishingModule() {
     </div>
   );
 }
-// import React from "react";
-// import { EMAILS } from "../data/emails";
-// import EmailIframeViewer from "../components/EmailIframeViewer";
-
-// export default function PhishingModule() {
-//   const email = EMAILS[2];
-
-//   return (
-//     <div className="h-screen bg-slate-950 p-6">
-//       <div className="max-w-4xl mx-auto h-full bg-slate-900 rounded-xl p-4">
-//         <div className="text-slate-100 mb-2 font-semibold">{email.subject}</div>
-//         <div className="h-[80vh] border border-slate-800 rounded-lg overflow-hidden">
-//           <EmailIframeViewer html={email.html} />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }

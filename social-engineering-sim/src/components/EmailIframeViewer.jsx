@@ -11,8 +11,10 @@ export default function EmailIframeViewer({
   // Reset loader when switching emails
   useEffect(() => {
     function handler(e) {
-      if (e.data?.type === "EMAIL_LINK_EVENT") {
+      if (e.data?.type === "EMAIL_LINK_HOVER") {
         onLinkHover?.({ href: e.data.href });
+      }
+      if (e.data?.type === "EMAIL_LINK_CLICK") {
         onLinkClick?.({ href: e.data.href });
       }
     }
@@ -26,30 +28,28 @@ export default function EmailIframeViewer({
 
     const interceptScript = `
 <script>
-  function sendLinkInfo(e) {
-    const a = e.target.closest('a');
-    if (!a) return;
+  function findLink(target) {
+    return target && target.closest ? target.closest('a') : null;
+  }
 
-    const href = a.getAttribute('href') || '';
-
-    window.parent.postMessage(
-      { type: 'EMAIL_LINK_EVENT', href: href },
-      '*'
-    );
+  function post(type, href) {
+    window.parent.postMessage({ type, href }, '*');
   }
 
   document.addEventListener('mouseover', function(e) {
-    const a = e.target.closest('a');
+    const a = findLink(e.target);
     if (!a) return;
-    sendLinkInfo(e);
-  });
+    const href = a.getAttribute('href') || '';
+    post('EMAIL_LINK_HOVER', href);
+  }, true);
 
   document.addEventListener('click', function(e) {
-    const a = e.target.closest('a');
+    const a = findLink(e.target);
     if (!a) return;
     e.preventDefault();
     e.stopPropagation();
-    sendLinkInfo(e);
+    const href = a.getAttribute('href') || '';
+    post('EMAIL_LINK_CLICK', href);
   }, true);
 </script>
 `;
