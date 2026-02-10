@@ -36,14 +36,14 @@ const ENCOUNTERS = [
   },
   {
     key: "clear_attacker",
-    title: "Encounter 4: Clear attacker",
+    title: "Encounter 4: Clear Stranger",
     subtitle: "\"I'm late, forgot my fob. Just let me in.\"",
     type: "decision_attacker_clear",
   },
   {
     key: "advanced_attacker",
-    title: "Encounter 5: Advanced attacker",
-    subtitle: "Calm, confident, subtle excuse.",
+    title: "Encounter 5: Man in a suit",
+    subtitle: "Morning! I've got my keys but I left the fob upstairs. Could you let me in if thats alright? ",
     type: "decision_attacker_advanced",
   },
 ];
@@ -80,7 +80,7 @@ export default class TailgatingScene extends Phaser.Scene {
     this.dialogueActive = false;
 
     this.dialogueTimer = null;
-    this.dialogueAutoDelayMs = 2150; // tune
+    this.dialogueAutoDelayMs = 2550; // tune
 
     this.lastDirection = "front";
   }
@@ -187,12 +187,20 @@ export default class TailgatingScene extends Phaser.Scene {
     const lobby = this.add.rectangle(width / 2, height / 2, width * 0.88, height * 0.78, 0x0f151e);
     lobby.setStrokeStyle(2, 0x223044);
 
-    // Door zone (top center)
+   // Door zone
     const doorX = width / 2;
-    const doorY = height * 0.18;
+    const doorY = height * 0.22;
     const doorW = 110;
     const doorH = 34;
 
+    // Queue zone (BEHIND the player, so it sits lower)
+    const qX = width / 2;
+    const qY = height * 0.52;     // move down
+    const qW = 280;
+    const qH = 110;
+
+
+    // Draw door
     const door = this.add.rectangle(doorX, doorY, doorW, doorH, 0x203042);
     door.setStrokeStyle(2, 0x3a587a);
 
@@ -202,41 +210,43 @@ export default class TailgatingScene extends Phaser.Scene {
       color: "#cfe2ff",
     }).setOrigin(0.5);
 
-    // Queue zone (where NPC pressure rises)
-    const qX = width / 2;
-    const qY = height * 0.33;
-    const qW = 220;
-    const qH = 80;
-
+    // Draw queue
     const queue = this.add.rectangle(qX, qY, qW, qH, 0x162433);
     queue.setStrokeStyle(2, 0x2a3e56);
 
-    this.add.text(qX, qY - 52, "QUEUE ZONE", {
+    this.add.text(qX, qY - qH / 2 - 18, "QUEUE ZONE", {
       fontFamily: "system-ui, Arial",
       fontSize: "12px",
       color: "#9fb6cf",
     }).setOrigin(0.5);
 
     // Physics actors (placeholders)
+    // Player sits between queue and entrance, slightly below the queue centre
+    // Player between door and queue zone
+    const playerY = height * 0.36;
+
     this.player = this.physics.add
-      .sprite(width / 2, height * 0.55, null)
+      .sprite(width / 2 + 80, playerY, null)
       .setSize(22, 22);
     this.player.setImmovable(true);
 
     const playerViz = this.add.rectangle(this.player.x, this.player.y, 22, 22, 0x4da3ff);
     this.player._viz = playerViz;
 
+    // NPC starts further down, will walk up into the queue zone
     this.npc = this.physics.add
-      .sprite(width / 2, height * 0.75, null)
+      .sprite(width / 2, Math.min(height - 60, qY + 200), null)
       .setSize(22, 22);
     this.npc.setImmovable(true);
 
     const npcViz = this.add.rectangle(this.npc.x, this.npc.y, 22, 22, 0xffb14d);
     this.npc._viz = npcViz;
 
-    // Zones (not collisions yet, simple distance checks)
+    // Zones used by logic
     this.zoneDoor = { x: doorX, y: doorY, w: doorW, h: doorH };
     this.zoneQueue = { x: qX, y: qY, w: qW, h: qH };
+
+
   }
 
   /* -----------------------
@@ -435,10 +445,12 @@ export default class TailgatingScene extends Phaser.Scene {
       const inQueue = this.isInZone(this.npc.x, this.npc.y, this.zoneQueue);
 
       if (inQueue) {
-        // Stop NPC when it reaches queue zone (simple clamp)
-       if (this.npc.y <= this.zoneQueue.y) {
+      // Stop NPC when it reaches the bottom edge of the queue zone
+        const queueBottom = this.zoneQueue.y + this.zoneQueue.h / 2 - 12;
+        if (this.npc.y <= queueBottom) {
           this.npc.body.setVelocity(0, 0);
         }
+
 
 
         if (addsPressure) {
@@ -781,7 +793,7 @@ handleChoice(actionKey) {
         "You: Please tap your fob.",
         "NPC: Yeah, one sec.",
         "NPC: (taps fob and the door unlocks)",
-        "NPC: Thanks."
+        "NPC: (mutters) Could've just held it..."
       ];
 
       useTailgatingStore.getState().applyDeltas({
@@ -930,9 +942,55 @@ handleChoice(actionKey) {
   this.stopPressureTimer();
   this.stopNPC();
 
+  const hasFob = this.npcHasFobForEncounter(type);
+  // Parcel resident: if you've already engaged (asked a question) and then "refuse",
+// they authenticate anyway and enter angrily.
+const isParcelRefuseAfterTalk =
+  type === "decision_parcel" &&
+  this.encounterPhase === "followup" &&
+  resolvedKey === "REFUSE";
+
+if (isParcelRefuseAfterTalk) {
+  // Override what happens: they enter using their fob, but the interaction escalates socially
+  const overrideResponse = [
+    "You: Sorry, I can't let you in without you using the reader.",
+    "NPC: Yeah, I know.",
+    "NPC: (puts the parcel down, taps their fob)",
+    "NPC: (goes in, annoyed)"
+  ];
+
+  useTailgatingStore.getState().applyDeltas({
+    pressureDelta: 8,   // social awkwardness spikes
+    riskDelta: -2,      // security is actually better because they authenticated
+    incident: {
+      encounter: idx,
+      type: "choice",
+      message: "REFUSE then authenticates (parcel) (p8, r-2)",
+    },
+  });
+  this.refreshMeters();
+
+  this.showDialogue(overrideResponse);
+  this.txtFeedback.setText("You enforced the process. It caused friction, but kept security intact.");
+
+  this.clearChoices();
+
+  this.endEncounterAfterDialogue({
+    direction: "in",
+    response: overrideResponse,
+    feedback: "You enforced the process. It caused friction, but kept security intact.",
+    minReadMs: 1100,
+  });
+
+  return;
+}
+
+  // They enter if you explicitly let them in, OR if they authenticate with their fob
   const entersBuilding =
-  resolvedKey === "LET_IN" ||
-  resolvedKey === "HOLD_DOOR";
+    resolvedKey === "LET_IN" ||
+    resolvedKey === "HOLD_DOOR" ||
+    (hasFob && (resolvedKey === "WAIT_SILENT" || resolvedKey === "REDIRECT_FOB"));
+
 
   // For REFUSE or USE_INTERCOM final outcomes, they leave
   this.moveNPCOut(entersBuilding ? "in" : "out");
