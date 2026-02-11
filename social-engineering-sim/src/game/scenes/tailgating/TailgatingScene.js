@@ -150,20 +150,8 @@ export default class TailgatingScene extends Phaser.Scene {
   this.txtFeedback.setWordWrapWidth(panelW - 28);
 
  // Meter labels and bars
-  const barW = 200;
-  const barLeftX = width - 270;
-  const barCenterX = barLeftX + barW / 2;
-  const labelGap = 12;
+  this.applyHudLayout(width);
 
-  this.pressureBarBg.setPosition(barCenterX, 20);
-  this.pressureBarFill.setPosition(barLeftX, 20);
-
-  this.riskBarBg.setPosition(barCenterX, 44);
-  this.riskBarFill.setPosition(barLeftX, 44);
-
-  const labelX = barLeftX - labelGap;
-  this.txtPressure.setPosition(labelX, 12);
-  this.txtRisk.setPosition(labelX, 36);
 
 
   // Re render choices for current encounter type
@@ -360,6 +348,8 @@ export default class TailgatingScene extends Phaser.Scene {
     // Container for buttons
     this.choiceContainer = this.add.container(0, 0);
     this.ui.add(this.choiceContainer);
+    this.applyHudLayout(width);
+
 
     this.refreshMeters();
   }
@@ -1174,11 +1164,16 @@ if (isParcelRefuseAfterTalk) {
     color: "#9fb6cf",
   }).setOrigin(0.5);
 
-  const tHint = this.add.text(width / 2, height / 2 + 75, "Press R to restart", {
+  const isMobile = width < 520;
+  const hintText = isMobile ? "Tap to restart" : "Press R to restart";
+
+  const tHint = this.add.text(width / 2, height / 2 + 75, hintText, {
     fontFamily: "system-ui, Arial",
     fontSize: "13px",
     color: "#e6eefc",
   }).setOrigin(0.5);
+  
+
 
   // Track all ending objects so we can cleanly destroy them later
   this.endingObjects = [overlay, panel, tTitle, tBody, tStats, tHint];
@@ -1232,10 +1227,21 @@ if (isParcelRefuseAfterTalk) {
   }
 
   clearEndingOverlay() {
-  if (this.restartKeyHandler) {
-    this.input.keyboard.off("keydown-R", this.restartKeyHandler);
-    this.restartKeyHandler = null;
-  }
+ this.endingTapHandler = () => {
+  this.clearEndingOverlay();
+  useTailgatingStore.getState().resetGame();
+  this.refreshMeters();
+  this.startEncounter();
+};
+
+// Arm tap-to-restart slightly later so the tap that caused the ending
+// does not instantly restart the game on mobile.
+this.time.delayedCall(250, () => {
+  this.input.once("pointerdown", this.endingTapHandler);
+});
+
+
+
 
   if (this.endingObjects && this.endingObjects.length > 0) {
     this.endingObjects.forEach((o) => {
@@ -1416,6 +1422,79 @@ endEncounterAfterDialogue({
     this.txtFeedback.setText((feedback || "") + "\n\nClick or press Enter to continue");
   });
 }
+
+applyHudLayout(width) {
+  const isMobile = width < 520;
+
+  const padX = 16;
+  const topY = 10;
+
+  if (isMobile) {
+    // Make HUD taller on mobile
+    const hudH = 96;
+    this.hudBg.setPosition(width / 2, hudH / 2);
+    this.hudBg.height = hudH;
+
+    // Title and encounter stay top left
+    this.txtTitle.setPosition(padX, topY);
+    this.txtEncounter.setPosition(padX, topY + 20);
+
+    // Meters stacked under encounter, left aligned
+    const barW = Math.max(160, Math.min(240, width - padX * 2));
+    const barLeftX = padX;
+    const barCenterX = barLeftX + barW / 2;
+
+    // Labels above each bar (no right-aligned labels on mobile)
+    this.txtPressure.setOrigin(0, 0);
+    this.txtRisk.setOrigin(0, 0);
+
+    this.txtPressure.setPosition(padX, topY + 42);
+    this.pressureBarBg.setSize(barW, 10);
+    this.pressureBarFill.setSize(this.pressureBarFill.width, 10);
+    this.pressureBarBg.setPosition(barCenterX, topY + 60);
+    this.pressureBarFill.setPosition(barLeftX, topY + 60);
+
+    this.txtRisk.setPosition(padX, topY + 68);
+    this.riskBarBg.setSize(barW, 10);
+    this.riskBarFill.setSize(this.riskBarFill.width, 10);
+    this.riskBarBg.setPosition(barCenterX, topY + 86);
+    this.riskBarFill.setPosition(barLeftX, topY + 86);
+  } else {
+    // Desktop: your current layout
+    const hudH = 68;
+    this.hudBg.setPosition(width / 2, 34);
+    this.hudBg.height = hudH;
+
+    this.txtTitle.setPosition(16, 10);
+    this.txtEncounter.setPosition(16, 30);
+
+    const barW = 200;
+    const barLeftX = width - 270;
+    const barCenterX = barLeftX + barW / 2;
+    const labelGap = 12;
+
+    // Restore right-aligned labels
+    this.txtPressure.setOrigin(1, 0);
+    this.txtRisk.setOrigin(1, 0);
+
+    this.pressureBarBg.setSize(barW, 10);
+    this.riskBarBg.setSize(barW, 10);
+
+    this.pressureBarBg.setPosition(barCenterX, 20);
+    this.pressureBarFill.setPosition(barLeftX, 20);
+
+    this.riskBarBg.setPosition(barCenterX, 44);
+    this.riskBarFill.setPosition(barLeftX, 44);
+
+    const labelX = barLeftX - labelGap;
+    this.txtPressure.setPosition(labelX, 12);
+    this.txtRisk.setPosition(labelX, 36);
+  }
+
+  // Make sure fills still match current meter values after resizing
+  this.refreshMeters();
+}
+
 
   update() {
     this.syncViz();
