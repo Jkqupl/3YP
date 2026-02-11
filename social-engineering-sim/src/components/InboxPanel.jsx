@@ -1,7 +1,7 @@
 import React from "react";
 import { useGameStore } from "../state/useGameStore";
 
-export default function InboxPanel() {
+export default function InboxPanel({ onOpenEmail }) {
   const emails = useGameStore((s) => s.emails);
   const currentEmailId = useGameStore((s) => s.currentEmailId);
   const setCurrentEmailId = useGameStore((s) => s.setCurrentEmailId);
@@ -15,7 +15,6 @@ export default function InboxPanel() {
         {emails.map((e) => {
           const active = e.id === currentEmailId;
           const decision = userDecisions[e.id]; // "phish" | "real" | undefined
-
           const leftBar =
             decision === "phish"
               ? "before:bg-red-500"
@@ -26,9 +25,13 @@ export default function InboxPanel() {
           return (
             <button
               key={e.id}
-              onClick={() => setCurrentEmailId(e.id)}
+              onClick={() => {
+                setCurrentEmailId(e.id);
+                onOpenEmail?.();
+              }}
               className={[
-                "w-full text-left rounded-lg px-3 py-2 border transition relative",
+                "w-full text-left rounded-lg px-3 py-2 md:py-2 py-1.5 border transition relative",
+                ,
                 "before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:rounded-l-lg",
                 leftBar,
                 active

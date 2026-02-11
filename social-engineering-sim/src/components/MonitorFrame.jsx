@@ -2,6 +2,7 @@ import React from "react";
 import InboxPanel from "./InboxPanel";
 import EmailPanel from "./EmailPanel";
 import { useGameStore } from "../state/useGameStore";
+import PhishingLayout from "./PhishingLayout";
 
 export default function MonitorFrame() {
   const ending = useGameStore((state) => state.ending);
@@ -10,10 +11,7 @@ export default function MonitorFrame() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950">
-      <div
-        className="w-full max-w-5xl aspect-video border border-cyan-500 
-                   bg-slate-900/90 shadow-xl rounded-xl p-4 flex flex-col"
-      >
+      <div className="w-full max-w-6xl h-[82vh] md:h-[78vh] border border-cyan-500 bg-slate-900/90 shadow-xl rounded-xl p-4 flex flex-col">
         <header className="flex items-center justify-between mb-3 border-b border-cyan-700 pb-2">
           <h1 className="text-cyan-300 text-xl font-semibold">
             Social Engineering Simulator - Corporate Terminal
@@ -63,13 +61,8 @@ export default function MonitorFrame() {
             </button>
           </div>
         ) : (
-          <div className="flex-1 grid grid-cols-3 gap-3">
-            <div className="col-span-1">
-              <InboxPanel />
-            </div>
-            <div className="col-span-2">
-              <EmailPanel />
-            </div>
+          <div className="flex-1 min-h-0">
+            <PhishingLayout />
           </div>
         )}
       </div>

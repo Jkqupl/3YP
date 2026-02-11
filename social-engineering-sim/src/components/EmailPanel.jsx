@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useGameStore } from "../state/useGameStore";
 import EmailIframeViewer from "./EmailIframeViewer";
 
-export default function EmailPanel() {
+export default function EmailPanel({ mobile = false, onBack }) {
   const decideAndNext = useGameStore((s) => s.decideAndNext);
   const setDecision = useGameStore((s) => s.setDecision);
   const userDecisions = useGameStore((s) => s.userDecisions);
@@ -42,7 +42,23 @@ export default function EmailPanel() {
 
   return (
     <div className="h-full flex flex-col gap-3 p-4">
-      <div className="flex items-start justify-between gap-4">
+      {mobile && (
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 text-sm"
+          >
+            Back
+          </button>
+
+          <div className="text-slate-300 text-sm">Inbox</div>
+
+          <div className="w-[64px]" />
+        </div>
+      )}
+
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
         {/* LEFT: Subject + sender */}
         <div className="min-w-0">
           <div className="text-slate-100 font-semibold truncate">
@@ -58,12 +74,12 @@ export default function EmailPanel() {
         </div>
 
         {/* RIGHT: Buttons + URL preview */}
-        <div className="flex items-start gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-2">
           <div className="flex gap-2">
             <button
               onClick={() => decideAndNext(email.id, "phish")}
               className={[
-                "px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
+                "w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
                 "border shadow-sm active:scale-95",
                 decision === "phish"
                   ? "bg-red-600 text-white border-red-300 ring-2 ring-red-300 ring-offset-2 ring-offset-slate-950"
@@ -76,7 +92,7 @@ export default function EmailPanel() {
             <button
               onClick={() => decideAndNext(email.id, "real")}
               className={[
-                "px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
+                "w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
                 "border shadow-sm active:scale-95",
                 decision === "real"
                   ? "bg-green-600 text-white border-green-300 ring-2 ring-green-300 ring-offset-2 ring-offset-slate-950"
