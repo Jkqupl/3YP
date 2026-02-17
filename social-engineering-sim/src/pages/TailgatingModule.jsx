@@ -31,10 +31,10 @@ export default function TailgatingModule() {
             <div className="flex items-start justify-between gap-6">
               <div className="space-y-4">
                 <h1 className="text-3xl font-bold text-cyan-300">
-                  Tailgating Security
+                  What is Tailgating?
                 </h1>
                 <p className="text-slate-300">
-                  You've probably heard of tailgating in the context of a car
+                  {/* You've probably heard of tailgating in the context of a car
                   following too close behind another and the tailgating we’re
                   talking about here isn’t too different. Ever held the door for
                   someone when entering work or going home because it was the
@@ -45,70 +45,68 @@ export default function TailgatingModule() {
                   it to them on a silver plate.
                   <br />
                   This is exactly what tailgating attack relies on and we’ll be
-                  going over it in more detail in this module.
+                  going over it in more detail in this module. */}
+                  Tailgating is a social engineering attack that takes advantage
+                  of normal human behaviour, such as politeness, trust, and the
+                  desire to avoid awkward situations. It occurs when an attacker
+                  gains access to a restricted area by following closely behind
+                  an authorised person, rather than using their own access
+                  credentials. Instead of hacking a system, tailgating targets
+                  people. Attackers may pretend to be employees, delivery
+                  drivers, contractors, or visitors who simply forgot their
+                  access card.
+                  <br />
+                  <br />
+                  By blending in and appearing legitimate, they rely on others
+                  to hold doors open or bypass security checks on their behalf.
+                  Because tailgating often feels harmless or polite, it can
+                  easily go unnoticed. However, once inside a restricted area,
+                  an attacker may be able to steal equipment, access
+                  confidential information, or cause physical or digital damage.
                 </p>
               </div>
             </div>
 
             {/* Learning objectives */}
-            <section className="grid md:grid-cols-3 gap-6">
-              <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-                <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-                  Understand the concept of tailgating
-                </h2>
-                <p className="text-xs text-slate-300">
-                  Learn to spot subtle signals in email content such as urgency,
-                  weird requests, and mismatched sender details.
-                </p>
-              </div>
-              <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-                <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-                  Identify tailgating attempts
-                </h2>
-                <p className="text-xs text-slate-300">
-                  Understand how attackers replicate login portals and how to
-                  verify URLs and security indicators before entering passwords.
-                </p>
-              </div>
-              <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-                <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-                  Respond correctly to tailgating attempts
-                </h2>
-                <p className="text-xs text-slate-300">
-                  Practice safe responses such as closing suspicious pages,
-                  deleting emails, and using official channels to verify
-                  activity.
-                </p>
-              </div>
-            </section>
-
-            {/* Tailgating explanation */}
             <section className="space-y-3">
               <h2 className="text-xl font-semibold text-cyan-300">
-                What is tailgating?
+                Learning Objectives
               </h2>
-              <p className="text-sm text-slate-300">
-                Tailgating is a social engineering attack that takes advantage
-                of normal human behaviour, such as politeness, trust, and the
-                desire to avoid awkward situations. It occurs when an attacker
-                gains access to a restricted area by following closely behind an
-                authorised person, rather than using their own access
-                credentials. Instead of hacking a system, tailgating targets
-                people. Attackers may pretend to be employees, delivery drivers,
-                contractors, or visitors who simply forgot their access card.
-                <br />
-                <br />
-                By blending in and appearing legitimate, they rely on others to
-                hold doors open or bypass security checks on their behalf.
-                Because tailgating often feels harmless or polite, it can easily
-                go unnoticed. However, once inside a restricted area, an
-                attacker may be able to steal equipment, access confidential
-                information, or cause physical or digital damage.
-              </p>
+              <section className="grid md:grid-cols-3 gap-6">
+                <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
+                  <h2 className="text-sm font-semibold text-cyan-300 mb-2">
+                    Understand the concept of tailgating
+                  </h2>
+                  <p className="text-xs text-slate-300">
+                    Learn to spot subtle signals in email content such as
+                    urgency, weird requests, and mismatched sender details.
+                  </p>
+                </div>
+                <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
+                  <h2 className="text-sm font-semibold text-cyan-300 mb-2">
+                    Identify tailgating attempts
+                  </h2>
+                  <p className="text-xs text-slate-300">
+                    Understand how attackers replicate login portals and how to
+                    verify URLs and security indicators before entering
+                    passwords.
+                  </p>
+                </div>
+                <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
+                  <h2 className="text-sm font-semibold text-cyan-300 mb-2">
+                    Respond correctly to tailgating attempts
+                  </h2>
+                  <p className="text-xs text-slate-300">
+                    Practice safe responses such as closing suspicious pages,
+                    deleting emails, and using official channels to verify
+                    activity.
+                  </p>
+                </div>
+              </section>
             </section>
 
             {/* Tailgating examples */}
-            <section className="space-y-3">
+            {/* <section className="space-y-3">
               <h2 className="text-xl font-semibold text-cyan-300">
                 Examples in real life
               </h2>
@@ -135,7 +133,7 @@ export default function TailgatingModule() {
                 access attacks like tailgating are a common way for attackers to
                 bypass security controls without needing technical skills.
               </p>
-            </section>
+            </section> */}
 
             {/* How to defend yourself */}
             <section className="space-y-3">

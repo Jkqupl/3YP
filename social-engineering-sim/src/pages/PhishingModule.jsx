@@ -34,10 +34,10 @@ export default function PhishingModule() {
         {/* Intro section */}
         <section className="space-y-4">
           <h1 className="text-3xl font-bold text-cyan-300">
-            Phishing Attacks and Credential Funnels
+            What is Phishing?
           </h1>
           <p className="text-slate-300">
-            Phishing is probably the most well known cyber attack people are
+            {/* Phishing is probably the most well known cyber attack people are
             aware of even if they don’t know the exact definition. If you’ve
             ever got a spam email asking you to click a link or a random email
             asking you to reconfirm an order you don’t remember placing , that
@@ -49,47 +49,7 @@ export default function PhishingModule() {
             and potentially catch you out. Roughly 1 in 10 adults in the UK have
             fallen for phishing scams [1] and over £620 million was lost to
             fraud in the first half of 2025 [2] with phishing being a common way
-            for scammers to deliver these purchasing scams.
-          </p>
-        </section>
-
-        {/* Learning objectives */}
-        <section className="grid md:grid-cols-3 gap-6">
-          <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-            <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-              Recognise phishing emails
-            </h2>
-            <p className="text-xs text-slate-300">
-              Learn to spot subtle signals in email content such as urgency,
-              weird requests, and mismatched sender details.
-            </p>
-          </div>
-          <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-            <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-              Identify fake login pages
-            </h2>
-            <p className="text-xs text-slate-300">
-              Understand how attackers replicate login portals and how to verify
-              URLs and security indicators before entering passwords.
-            </p>
-          </div>
-          <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-            <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-              Respond safely
-            </h2>
-            <p className="text-xs text-slate-300">
-              Practice safe responses such as closing suspicious pages, deleting
-              emails, and using official channels to verify activity.
-            </p>
-          </div>
-        </section>
-
-        {/* Phishing explanation */}
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-cyan-300">
-            What is phishing?
-          </h2>
-          <p className="text-sm text-slate-300">
+            for scammers to deliver these purchasing scams. */}
             Phishing is a type of cyber attack where someone pretends to be a
             trusted organisation or person in order to trick you into giving
             away sensitive information. This usually includes login details,
@@ -112,8 +72,44 @@ export default function PhishingModule() {
           </p>
         </section>
 
-        {/* Phishing examples */}
+        {/* Learning objectives */}
         <section className="space-y-3">
+          <h2 className="text-xl font-semibold text-cyan-300">
+            Learning Objectives
+          </h2>
+          <section className="grid md:grid-cols-3 gap-6">
+            <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
+              <h2 className="text-sm font-semibold text-cyan-300 mb-2">
+                Recognise phishing emails
+              </h2>
+              <p className="text-xs text-slate-300">
+                Learn to spot subtle signals in email content such as urgency,
+                weird requests, and mismatched sender details.
+              </p>
+            </div>
+            <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
+              <h2 className="text-sm font-semibold text-cyan-300 mb-2">
+                Identify fake login pages
+              </h2>
+              <p className="text-xs text-slate-300">
+                Understand how attackers replicate login portals and how to
+                verify URLs and security indicators before entering passwords.
+              </p>
+            </div>
+            <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
+              <h2 className="text-sm font-semibold text-cyan-300 mb-2">
+                Respond safely
+              </h2>
+              <p className="text-xs text-slate-300">
+                Practice safe responses such as closing suspicious pages,
+                deleting emails, and using official channels to verify activity.
+              </p>
+            </div>
+          </section>
+        </section>
+
+        {/* Phishing examples */}
+        {/* <section className="space-y-3">
           <h2 className="text-xl font-semibold text-cyan-300">
             Real life examples
           </h2>
@@ -142,7 +138,7 @@ export default function PhishingModule() {
             that millions of phishing related reports are submitted each year in
             the UK alone.
           </p>
-        </section>
+        </section> */}
 
         {/* How to defend yourself */}
         <section className="space-y-3">
@@ -191,11 +187,10 @@ export default function PhishingModule() {
           </h2>
 
           <p className="text-sm text-slate-300">
-            You are an employee using a corporate inbox. You will receive a mix
-            of legitimate and malicious emails, including account confirmations,
-            password resets, invoices, shared documents, and crypto wallet
-            alerts. Your task is to decide whether each email is safe or a
-            phishing attempt, then respond accordingly.
+            You will receive a mix of legitimate and malicious emails, including
+            account confirmations, password resets, invoices, shared documents,
+            and crypto wallet alerts. Your task is to decide whether each email
+            is safe or a phishing attempt
           </p>
 
           <ul className="text-sm text-slate-300 list-disc list-inside space-y-1">
