@@ -94,6 +94,7 @@ export const useGameStore = create((set, get) => ({
     };
   }),
 
+  
   resetGame: () =>
   set((state) => ({
     userDecisions: {},

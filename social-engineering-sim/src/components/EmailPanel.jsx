@@ -1,30 +1,37 @@
-import React, { useState, useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useGameStore } from "../state/useGameStore";
 import EmailIframeViewer from "./EmailIframeViewer";
+import FeedbackOverlay from "./FeedBackOverlay";
 
 export default function EmailPanel({ mobile = false, onBack }) {
-  const decideAndNext = useGameStore((s) => s.decideAndNext);
-  const setDecision = useGameStore((s) => s.setDecision);
-  const userDecisions = useGameStore((s) => s.userDecisions);
-  const getScore = useGameStore((s) => s.getScore);
-  const previewTimeout = useRef(null);
-
   const emails = useGameStore((s) => s.emails);
   const currentEmailId = useGameStore((s) => s.currentEmailId);
 
+  const setDecision = useGameStore((s) => s.setDecision);
+  const decideAndNext = useGameStore((s) => s.decideAndNext);
+  const userDecisions = useGameStore((s) => s.userDecisions);
+  const getScore = useGameStore((s) => s.getScore);
+
+  const previewTimeout = useRef(null);
+
   const [urlPreview, setUrlPreview] = useState(null);
+
+  const [feedback, setFeedback] = useState(null);
+  // feedback = { variant: "correct"|"incorrect", title, message, bullets, chosen }
+
+  const email = useMemo(
+    () => emails.find((e) => e.id === currentEmailId),
+    [emails, currentEmailId],
+  );
 
   const allAnswered = emails.every((e) => userDecisions[e.id]);
 
-  const email = emails.find((e) => e.id === currentEmailId);
   const handleLinkHover = () => {};
 
   const handleLinkClick = (info) => {
     setUrlPreview(info);
 
-    if (previewTimeout.current) {
-      clearTimeout(previewTimeout.current);
-    }
+    if (previewTimeout.current) clearTimeout(previewTimeout.current);
 
     previewTimeout.current = setTimeout(() => {
       setUrlPreview(null);
@@ -38,10 +45,60 @@ export default function EmailPanel({ mobile = false, onBack }) {
       </div>
     );
   }
+
   const decision = userDecisions[email.id];
+
+  function openFeedback(choice) {
+    const isCorrect = choice === email.groundTruth;
+    const fb = isCorrect ? email.feedback?.correct : email.feedback?.incorrect;
+
+    setFeedback({
+      variant: isCorrect ? "correct" : "incorrect",
+      title: fb?.title ?? (isCorrect ? "Correct" : "Not quite"),
+      message: fb?.message ?? "",
+      bullets: fb?.bullets ?? [],
+      chosen: choice,
+    });
+  }
+
+  function handleDecision(choice) {
+    // store their choice immediately so UI updates (pill/colour)
+    setDecision(email.id, choice);
+
+    // show feedback overlay
+    openFeedback(choice);
+
+    // IMPORTANT: do not call decideAndNext yet
+    // we move on when they close the overlay (below)
+  }
+
+  function closeFeedbackAndAdvance() {
+    const chosen = feedback?.chosen;
+
+    setFeedback(null);
+
+    // now advance to next (also triggers endings when appropriate)
+    if (chosen) {
+      decideAndNext(email.id, chosen);
+    }
+  }
 
   return (
     <div className="h-full flex flex-col gap-3 p-4">
+      {/* Overlay must be rendered inside return */}
+      <FeedbackOverlay
+        open={!!feedback}
+        variant={feedback?.variant}
+        title={feedback?.title}
+        message={feedback?.message}
+        bullets={feedback?.bullets}
+        primaryLabel="Next email"
+        secondaryLabel="Close"
+        onClose={closeFeedbackAndAdvance}
+        onPrimary={closeFeedbackAndAdvance}
+        onSecondary={() => setFeedback(null)}
+      />
+
       {mobile && (
         <div className="flex items-center justify-between">
           <button
@@ -53,13 +110,11 @@ export default function EmailPanel({ mobile = false, onBack }) {
           </button>
 
           <div className="text-slate-300 text-sm">Inbox</div>
-
           <div className="w-[64px]" />
         </div>
       )}
 
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
-        {/* LEFT: Subject + sender */}
         <div className="min-w-0">
           <div className="text-slate-100 font-semibold truncate">
             {email.subject}
@@ -73,11 +128,10 @@ export default function EmailPanel({ mobile = false, onBack }) {
           </div>
         </div>
 
-        {/* RIGHT: Buttons + URL preview */}
         <div className="flex flex-col sm:flex-row sm:items-start gap-2">
           <div className="flex gap-2">
             <button
-              onClick={() => decideAndNext(email.id, "phish")}
+              onClick={() => handleDecision("phish")}
               className={[
                 "w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
                 "border shadow-sm active:scale-95",
@@ -90,7 +144,7 @@ export default function EmailPanel({ mobile = false, onBack }) {
             </button>
 
             <button
-              onClick={() => decideAndNext(email.id, "real")}
+              onClick={() => handleDecision("real")}
               className={[
                 "w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
                 "border shadow-sm active:scale-95",
@@ -149,7 +203,7 @@ export default function EmailPanel({ mobile = false, onBack }) {
           );
         })()}
 
-      <div className="flex-1 min-h-0 border border-slate-800 rounded-lg bg-white">
+      <div className="flex-1 min-h-0 border border-slate-800 rounded-lg bg-white overflow-hidden">
         <EmailIframeViewer
           html={email.html}
           onLinkHover={handleLinkHover}
