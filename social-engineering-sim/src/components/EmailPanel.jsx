@@ -149,7 +149,7 @@ export default function EmailPanel({ mobile = false, onBack }) {
           );
         })()}
 
-      <div className="flex-1 min-h-0 border border-slate-800 rounded-lg overflow-hidden bg-white">
+      <div className="flex-1 min-h-0 border border-slate-800 rounded-lg bg-white">
         <EmailIframeViewer
           html={email.html}
           onLinkHover={handleLinkHover}

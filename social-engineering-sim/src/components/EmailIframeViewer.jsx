@@ -62,6 +62,14 @@ export default function EmailIframeViewer({
     return () => window.removeEventListener("message", handler);
   }, [onLinkHover, onLinkClick]);
 
+  // window.addEventListener("click", (e) => {
+  //   const a = e.target.closest("a");
+  //   if (!a) return;
+
+  //   e.preventDefault();
+  //   onLinkClick({ href: a.href });
+  // });
+
   const srcDoc = useMemo(() => {
     if (!html) return "<!doctype html><html><body></body></html>";
 
@@ -74,6 +82,10 @@ export default function EmailIframeViewer({
     background: #ffffff;
     overflow-x: hidden;
   }
+    table[width="600"] {
+  margin: 0 auto !important;
+}
+
   /* Prevent common table-based overflow */
   table { max-width: 100% !important; }
   img { max-width: 100% !important; height: auto !important; }
@@ -159,6 +171,75 @@ ${wrappedBody}
 
   function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
+  }
+
+  function buildEmailDoc(html) {
+    return `
+  <html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <style>
+     body{
+  margin:0;
+  background:#eef1f4;
+  font-family: Arial, Helvetica, sans-serif;
+  padding:24px 12px; /* simulate inbox reading area */
+}
+
+/* email container */
+body > *{
+  max-width:600px;
+  margin:0 auto;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+
+      img{max-width:100%!important;height:auto!important}
+      table{max-width:100%!important}
+      a,button{min-height:44px}
+
+    </style>
+
+    <script>
+function findLink(el){
+  while(el && el !== document){
+    if(el.tagName === 'A') return el;
+    el = el.parentNode;
+  }
+  return null;
+}
+
+function send(type, href){
+  window.parent.postMessage({type, href}, '*');
+}
+
+document.addEventListener('pointerdown', e=>{
+  const a = findLink(e.target);
+  if(!a) return;
+
+  e.preventDefault();
+  e.stopImmediatePropagation();
+
+  const href = a.getAttribute('href') || '';
+  send('EMAIL_LINK_CLICK', href);
+}, true);
+
+/* hover preview */
+document.addEventListener('mouseover', e=>{
+  const a = findLink(e.target);
+  if(!a) return;
+  send('EMAIL_LINK_HOVER', a.getAttribute('href') || '');
+}, true);
+
+/* block ALL navigation attempts */
+document.addEventListener('click', e=>{
+  if(findLink(e.target)) e.preventDefault();
+}, true);
+</script>
+
+  </head>
+  <body>${html}</body>
+  </html>`;
   }
 
   function getBounds(nextScale = scaleRef.current) {
@@ -310,85 +391,21 @@ ${wrappedBody}
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full bg-slate-100">
       {!loaded && <div className="absolute inset-0 animate-pulse bg-white" />}
 
-      {/* Controls */}
-      <div className="absolute z-10 right-3 bottom-3 flex gap-2">
-        <button
-          type="button"
-          onClick={resetView}
-          className="px-3 py-2 text-xs rounded-lg bg-slate-900/90 border border-slate-700 text-slate-100"
-        >
-          Fit
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            const nextScale = clamp(scaleRef.current + 0.15, 0.35, 2.5);
-            const { tx: nextTx, ty: nextTy } = clampTransform(
-              txRef.current,
-              tyRef.current,
-              nextScale,
-            );
-            setTransform(nextTx, nextTy, nextScale);
-          }}
-          className="px-3 py-2 text-xs rounded-lg bg-slate-900/90 border border-slate-700 text-slate-100"
-        >
-          +
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            const nextScale = clamp(scaleRef.current - 0.15, 0.35, 2.5);
-            const { tx: nextTx, ty: nextTy } = clampTransform(
-              txRef.current,
-              tyRef.current,
-              nextScale,
-            );
-            setTransform(nextTx, nextTy, nextScale);
-          }}
-          className="px-3 py-2 text-xs rounded-lg bg-slate-900/90 border border-slate-700 text-slate-100"
-        >
-          −
-        </button>
-      </div>
-
-      {/* Viewport (handles pan/pinch) */}
-      <div
-        ref={viewportRef}
-        className="absolute inset-0 overflow-hidden"
-        style={{ touchAction: "none", background: "#f1f5f9" }} // slate-100 vibe
-      >
-        <div
-          className="rounded-xl shadow-md bg-white"
-          style={{
-            transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
-            transformOrigin: "0 0",
-            width: desktopWidth,
-          }}
-        >
-          <iframe
-            ref={iframeRef}
-            title="Email viewer"
-            srcDoc={srcDoc}
-            sandbox="allow-scripts"
-            className="block bg-white"
-            style={{
-              width: desktopWidth,
-              height: `${contentHRef.current}px`,
-              border: "0",
-            }}
-            onLoad={() => {
-              setLoaded(true);
-              onLoad?.();
-              fitToWidth();
-            }}
-          />
-        </div>
-      </div>
+      <iframe
+        ref={iframeRef}
+        className="w-full h-full border-0"
+        srcDoc={buildEmailDoc(html)}
+        onLoad={() => setLoaded(true)}
+        sandbox="allow-scripts"
+        style={{
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
+          background: "#f3f4f6",
+        }}
+      />
     </div>
   );
 }
