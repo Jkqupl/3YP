@@ -30,7 +30,7 @@ const ENCOUNTERS = [
   },
   {
     key: "ambiguous",
-    title: "Encounter 3: Ambiguous NPC",
+    title: "Encounter 3: Ambiguous Person",
     subtitle: "\"I live here.\"",
     type: "decision_ambiguous",
   },
@@ -83,6 +83,13 @@ export default class TailgatingScene extends Phaser.Scene {
     this.dialogueAutoDelayMs = 2550; // tune
 
     this.lastDirection = "front";
+    this.quitKeyHandler = null;
+
+    this.endingTapHandler = null;
+    this.endingTapArmer = null;
+    this.quitKeyHandler = null;
+
+
   }
 
   create() {
@@ -120,6 +127,16 @@ export default class TailgatingScene extends Phaser.Scene {
 
     this.input.keyboard.on("keydown-SPACE", this.onContinueHandler);
     this.input.keyboard.on("keydown-ENTER", this.onContinueHandler);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdown, this);
+    this.quitKeyHandler = () => {
+      const store = useTailgatingStore.getState();
+      if (store.ending) return;
+      store.setFail("You quit the simulation.");
+      this.showEnding("quit");
+    };
+
+    this.input.keyboard.on("keydown-Q", this.quitKeyHandler);
+
 
   }
 
@@ -806,7 +823,8 @@ handleChoice(actionKey) {
       this.clearChoices();
       this.awaitingContinue = true;
       this.canContinueAt = Date.now() + 900;
-      this.txtFeedback.setText("Good call. They authenticated.\n\nClick or press Enter to continue");
+      const postFeedback = this.composePostEncounterFeedback(type, "REDIRECT_FOB", "Good call. They authenticated.");
+      this.txtFeedback.setText(postFeedback + "\n\nClick or press Enter to continue");
       return;
     }
 
@@ -961,16 +979,18 @@ if (isParcelRefuseAfterTalk) {
   this.refreshMeters();
 
   this.showDialogue(overrideResponse);
-  this.txtFeedback.setText("You enforced the process. It caused friction, but kept security intact.");
+  const postFeedback = this.composePostEncounterFeedback(type, "REFUSE", "You enforced the process. It caused friction, but kept security intact.");
+  this.txtFeedback.setText(postFeedback);
 
   this.clearChoices();
 
   this.endEncounterAfterDialogue({
-    direction: "in",
-    response: overrideResponse,
-    feedback: "You enforced the process. It caused friction, but kept security intact.",
-    minReadMs: 1100,
-  });
+  direction: "in",
+  response: overrideResponse,
+  feedback: postFeedback,
+  minReadMs: 1100,
+});
+
 
   return;
 }
@@ -1010,16 +1030,17 @@ if (isParcelRefuseAfterTalk) {
   this.refreshMeters();
 
   if (outcome.response) this.showDialogue(outcome.response);
-  this.txtFeedback.setText(outcome.feedback || "");
+  const postFeedback = this.composePostEncounterFeedback(type, resolvedKey, outcome.feedback || "");
+  this.txtFeedback.setText(postFeedback);
 
   this.clearChoices();
 
   this.endEncounterAfterDialogue({
-    direction: entersBuilding ? "in" : "out",
-    response: outcome.response,
-    feedback: outcome.feedback,
-    minReadMs: 1100,
-  });
+  direction: entersBuilding ? "in" : "out",
+  response: outcome.response,
+  feedback: postFeedback,
+  minReadMs: 1100,
+});
 
   return;
 
@@ -1129,18 +1150,23 @@ if (isParcelRefuseAfterTalk) {
   panel.setStrokeStyle(2, 0x223044);
 
   const title =
-    ending === "perfect"
-      ? "Perfect Ending"
-      : ending === "good"
-      ? "Good Ending"
-      : "Fail Ending";
+  ending === "perfect"
+    ? "Perfect Ending"
+    : ending === "good"
+    ? "Good Ending"
+    : ending === "quit"
+    ? "Session Ended"
+    : "Fail Ending";
 
-  const body =
-    ending === "perfect"
-      ? "You handled each encounter safely and kept overall risk low."
-      : ending === "good"
-      ? "No breach occurred, but repeated small concessions increased risk over time."
-      : "An unauthorised person gained access. Tailgating can lead to theft and safety risks.";
+const body =
+  ending === "perfect"
+    ? "You handled each encounter safely and kept overall risk low."
+    : ending === "good"
+    ? "No breach occurred, but repeated small concessions increased risk over time."
+    : ending === "quit"
+    ? "You ended the simulation early."
+    : "An unauthorised person gained access. Tailgating can lead to theft and safety risks.";
+
 
   const stats = `Risk: ${state.securityRisk}/100   Pressure: ${state.socialPressure}/100`;
 
@@ -1177,6 +1203,29 @@ if (isParcelRefuseAfterTalk) {
 
   // Track all ending objects so we can cleanly destroy them later
   this.endingObjects = [overlay, panel, tTitle, tBody, tStats, tHint];
+
+  // Remove any existing armer/handler before setting new ones
+    if (this.endingTapArmer) {
+      this.endingTapArmer.remove(false);
+      this.endingTapArmer = null;
+    }
+    if (this.endingTapHandler) {
+      this.input.off("pointerdown", this.endingTapHandler);
+      this.endingTapHandler = null;
+    }
+
+    this.endingTapHandler = () => {
+      this.clearEndingOverlay();
+      useTailgatingStore.getState().resetGame();
+      this.refreshMeters();
+      this.startEncounter();
+    };
+
+    // Delay so the tap that caused the ending does not instantly restart
+    this.endingTapArmer = this.time.delayedCall(250, () => {
+      this.input.once("pointerdown", this.endingTapHandler);
+    });
+
 
   // Remove old handler if present
   if (this.restartKeyHandler) {
@@ -1226,23 +1275,20 @@ if (isParcelRefuseAfterTalk) {
     if (this.npc?._viz) this.npc._viz.setPosition(this.npc.x, this.npc.y);
   }
 
-  clearEndingOverlay() {
- this.endingTapHandler = () => {
-  this.clearEndingOverlay();
-  useTailgatingStore.getState().resetGame();
-  this.refreshMeters();
-  this.startEncounter();
-};
+clearEndingOverlay() {
+  // Cancel scheduled arming
+  if (this.endingTapArmer) {
+    this.endingTapArmer.remove(false);
+    this.endingTapArmer = null;
+  }
 
-// Arm tap-to-restart slightly later so the tap that caused the ending
-// does not instantly restart the game on mobile.
-this.time.delayedCall(250, () => {
-  this.input.once("pointerdown", this.endingTapHandler);
-});
+  // Remove pending tap handler
+  if (this.endingTapHandler) {
+    this.input.off("pointerdown", this.endingTapHandler);
+    this.endingTapHandler = null;
+  }
 
-
-
-
+  // Destroy overlay objects
   if (this.endingObjects && this.endingObjects.length > 0) {
     this.endingObjects.forEach((o) => {
       if (o && !o.destroyed) o.destroy();
@@ -1250,6 +1296,7 @@ this.time.delayedCall(250, () => {
   }
   this.endingObjects = [];
 }
+
 
 advanceEncounter() {
   this.txtFeedback.setText("");
@@ -1355,6 +1402,112 @@ stopNPC() {
   if (!this.npc?.body) return;
   this.npc.body.setVelocity(0, 0);
 }
+
+shutdown() {
+  if (this.quitKeyHandler) {
+    this.input.keyboard.off("keydown-Q", this.quitKeyHandler);
+    this.quitKeyHandler = null;
+  }
+  if (this.restartKeyHandler) {
+    this.input.keyboard.off("keydown-R", this.restartKeyHandler);
+    this.restartKeyHandler = null;
+  }
+  if (this.onContinueHandler) {
+    this.input.off("pointerdown", this.onContinueHandler);
+    this.input.keyboard.off("keydown-SPACE", this.onContinueHandler);
+    this.input.keyboard.off("keydown-ENTER", this.onContinueHandler);
+    this.onContinueHandler = null;
+  }
+}
+
+//Helper for Right/Wrong choice
+getVerdictForAction(encounterType, resolvedKey) {
+  // Returns: { ok: boolean, text: string }
+  // Keep it simple and opinionated: "ok" means aligned with best practice.
+
+  // Normalise some keys that you already map elsewhere
+  const k = resolvedKey;
+
+  // Clear attacker
+  if (encounterType === "decision_attacker_clear") {
+    if (k === "LET_IN" || k === "HOLD_DOOR") {
+      return { ok: false, text: "Not ideal. Letting them in under urgency is exactly what tailgaters rely on." };
+    }
+    if (k === "REFUSE" || k === "USE_INTERCOM") {
+      return { ok: true, text: "Correct. You stuck to a verification process and did not bypass access controls." };
+    }
+  }
+
+  // Advanced attacker
+  if (encounterType === "decision_attacker_advanced") {
+    if (k === "LET_IN" || k === "HOLD_DOOR") {
+      return { ok: false, text: "Not ideal. Plausible stories are not proof. Authentication is the proof." };
+    }
+    if (k === "REFUSE" || k === "USE_INTERCOM" || k === "REDIRECT_FOB") {
+      return { ok: true, text: "Correct. You required authentication rather than trusting confidence or appearance." };
+    }
+    if (k === "ASK_QUESTION") {
+      return { ok: true, text: "Mostly right. Questions can buy time, but you still need authentication." };
+    }
+  }
+
+  // Neighbour
+  if (encounterType === "decision_neighbour") {
+    if (k === "HOLD_DOOR" || k === "LET_IN") {
+      return { ok: false, text: "Not ideal. Even familiar faces should not bypass access controls." };
+    }
+    if (k === "USE_INTERCOM" || k === "REDIRECT_FOB") {
+      return { ok: true, text: "Correct. You verified or redirected to authentication." };
+    }
+    if (k === "ASK_QUESTION" || k === "REFUSE") {
+      return { ok: true, text: "Mostly right. You did not bypass security, and you kept the interaction controlled." };
+    }
+  }
+
+  // Parcel
+  if (encounterType === "decision_parcel") {
+    if (k === "HOLD_DOOR" || k === "LET_IN") {
+      return { ok: false, text: "Not ideal. ‘Hands full’ is a common excuse to prompt a bypass." };
+    }
+    if (k === "REDIRECT_FOB" || k === "WAIT_SILENT") {
+      return { ok: true, text: "Correct. You forced authentication rather than holding the door." };
+    }
+    if (k === "ASK_QUESTION" || k === "REFUSE") {
+      return { ok: true, text: "Mostly right. You kept security intact (even if it felt awkward)." };
+    }
+  }
+
+  // Ambiguous NPC
+  if (encounterType === "decision_ambiguous") {
+    if (k === "HOLD_DOOR" || k === "LET_IN") {
+      return { ok: false, text: "Not ideal. With unclear identity, you should not allow entry without authentication." };
+    }
+    if (k === "REFUSE" || k === "USE_INTERCOM" || k === "REDIRECT_FOB") {
+      return { ok: true, text: "Correct. You relied on a process rather than a story." };
+    }
+    if (k === "WAIT_SILENT" || k === "ASK_QUESTION") {
+      return { ok: true, text: "Mostly right. You did not grant access, but verification is stronger than waiting." };
+    }
+  }
+
+  // Default: treat as neutral-safe
+  if (k === "LET_IN" || k === "HOLD_DOOR") {
+    return { ok: false, text: "Not ideal. You bypassed access controls." };
+  }
+  return { ok: true, text: "Mostly right. You kept to safer behaviour." };
+}
+
+composePostEncounterFeedback(encounterType, resolvedKey, outcomeFeedback) {
+  const verdict = this.getVerdictForAction(encounterType, resolvedKey);
+  const header = verdict.ok ? "Right choice." : "Wrong choice.";
+  const parts = [];
+
+  if (outcomeFeedback) parts.push(outcomeFeedback);
+  parts.push(`${header} ${verdict.text}`);
+
+  return parts.join("\n\n");
+}
+
 
 moveNPCOut(direction, onDone) {
   if (!this.npc || !this.npc._viz) {

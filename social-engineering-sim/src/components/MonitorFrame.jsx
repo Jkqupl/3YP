@@ -14,9 +14,8 @@ export default function MonitorFrame() {
       <div className="w-full max-w-6xl h-[82vh] md:h-[78vh] border border-cyan-500 bg-slate-900/90 shadow-xl rounded-xl p-4 flex flex-col">
         <header className="flex items-center justify-between mb-3 border-b border-cyan-700 pb-2">
           <h1 className="text-cyan-300 text-xl font-semibold">
-            Social Engineering Simulator - Corporate Terminal
+            Phishing Simulator - Email Inbox
           </h1>
-          <p className="text-xs text-slate-400">Credential Funnel Training</p>
         </header>
 
         {ending ? (
