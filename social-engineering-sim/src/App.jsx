@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import PhishingModule from "./pages/PhishingModule";
 import TailgatingModule from "./pages/TailgatingModule";
 import PretextingModule from "./pages/PretextingModule";
+import "./styles/global.css";
 
 export default function App() {
   return (

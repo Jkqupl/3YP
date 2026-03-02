@@ -10,230 +10,374 @@ export default function PhishingModule() {
   const handleStart = () => {
     resetGame();
     setStarted(true);
-    // optional: scroll to the simulator
     setTimeout(() => {
       const el = document.getElementById("phishing-simulator");
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-12">
-        {/* Breadcrumb / back link */}
-        <div className="text-sm text-slate-400">
-          <Link to="/" className="text-cyan-400 hover:text-cyan-300">
-            Home
-          </Link>
-          <span className="mx-1">/</span>
-          <span>Phishing module</span>
+    <div style={{ minHeight: "100vh" }}>
+      <div className="top-bar" />
+
+      <nav className="app-nav">
+        <span
+          className="mono"
+          style={{
+            color: "var(--neon)",
+            fontSize: "0.75rem",
+            letterSpacing: "0.12em",
+          }}
+        >
+          <span style={{ opacity: 0.5 }}>~/</span>SE-SIM
+        </span>
+        <div className="module-badge">MODULE: PHISHING</div>
+      </nav>
+
+      <div className="page-container">
+        {/* Breadcrumb */}
+        <div className="breadcrumb fade-up">
+          <Link to="/">~/home</Link>
+          <span className="breadcrumb__sep">/</span>
+          <span className="breadcrumb__current">phishing-module</span>
         </div>
 
-        {/* Intro section */}
-        <section className="space-y-4">
-          <h1 className="text-3xl font-bold text-cyan-300">
+        {/* HERO */}
+        <section
+          className="fade-up d1"
+          style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+        >
+          <div className="section-label" style={{ marginBottom: "10px" }}>
+            // THREAT VECTOR 01
+          </div>
+          <h1
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              fontSize: "clamp(1.8rem,5vw,3rem)",
+              fontWeight: 700,
+              color: "var(--neon)",
+              margin: "0 0 16px",
+              letterSpacing: "0.02em",
+              textShadow: "0 0 30px rgba(34,255,224,0.2)",
+              lineHeight: 1.1,
+            }}
+          >
             What is Phishing?
           </h1>
-          <p className="text-slate-300">
-            {/* Phishing is probably the most well known cyber attack people are
-            aware of even if they don’t know the exact definition. If you’ve
-            ever got a spam email asking you to click a link or a random email
-            asking you to reconfirm an order you don’t remember placing , that
-            was likely an attempted phishing scam.
-            <br />
-            Although email providers do a good job at filtering out the really
-            obvious examples and you can tell when an email looks suspicious
-            majority of the time, some of the phishing emails can be realistic
-            and potentially catch you out. Roughly 1 in 10 adults in the UK have
-            fallen for phishing scams [1] and over £620 million was lost to
-            fraud in the first half of 2025 [2] with phishing being a common way
-            for scammers to deliver these purchasing scams. */}
+          <p
+            style={{
+              color: "var(--text)",
+              fontSize: "clamp(0.9rem,2.2vw,1rem)",
+              lineHeight: 1.75,
+              maxWidth: "700px",
+              opacity: 0.85,
+              margin: 0,
+            }}
+          >
             Phishing is a type of cyber attack where someone pretends to be a
             trusted organisation or person in order to trick you into giving
-            away sensitive information. This usually includes login details,
-            bank information, or one time passcodes. Phishing attacks often try
-            to create a sense of urgency or importance. For example, an email
-            might claim that your account will be locked, a payment has failed,
-            or suspicious activity has been detected.
-            <br />
-            <br />
+            away sensitive information — login details, bank information, or
+            one-time passcodes.
+          </p>
+        </section>
+
+        <hr
+          className="neon-divider fade-up d1"
+          style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+        />
+
+        {/* BODY */}
+        <section
+          className="fade-up d2"
+          style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+        >
+          <p
+            style={{
+              color: "var(--text)",
+              fontSize: "0.95rem",
+              lineHeight: 1.8,
+              opacity: 0.82,
+            }}
+          >
+            Phishing attacks often try to create a sense of urgency or
+            importance. For example, an email might claim that your account will
+            be locked, a payment has failed, or suspicious activity has been
+            detected.
+          </p>
+          <p
+            style={{
+              color: "var(--text)",
+              fontSize: "0.95rem",
+              lineHeight: 1.8,
+              opacity: 0.82,
+              marginTop: "14px",
+            }}
+          >
             The goal is to pressure you into acting quickly before you have time
             to think. Most phishing attacks rely on fake links or fake login
-            pages. These pages are designed to look almost identical to real
-            websites, such as banks, delivery companies, or popular online
-            services.
-            <br />
-            Once you enter your details, the attacker can use them to access
-            your account or commit fraud. Phishing does not only happen through
-            email. It can also occur through text messages, social media, phone
-            calls, and even QR codes.
+            pages designed to look almost identical to real websites. Once you
+            enter your details, the attacker can use them to access your account
+            or commit fraud.
           </p>
-        </section>
-
-        {/* Learning objectives */}
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-cyan-300">
-            Learning Objectives
-          </h2>
-          <section className="grid md:grid-cols-3 gap-6">
-            <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-              <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-                Recognise phishing emails
-              </h2>
-              <p className="text-xs text-slate-300">
-                Learn to spot subtle signals in email content such as urgency,
-                weird requests, and mismatched sender details.
-              </p>
-            </div>
-            <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-              <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-                Identify fake login pages
-              </h2>
-              <p className="text-xs text-slate-300">
-                Understand how attackers replicate login portals and how to
-                verify URLs and security indicators before entering passwords.
-              </p>
-            </div>
-            <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-              <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-                Respond safely
-              </h2>
-              <p className="text-xs text-slate-300">
-                Practice safe responses such as closing suspicious pages,
-                deleting emails, and using official channels to verify activity.
-              </p>
-            </div>
-          </section>
-        </section>
-
-        {/* Phishing examples */}
-        {/* <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-cyan-300">
-            Real life examples
-          </h2>
-          <p className="text-sm text-slate-300">
-            A common example is a fake delivery email claiming that a parcel
-            could not be delivered. The message includes a link asking you to
-            confirm your address or pay a small fee. The link leads to a fake
-            website designed to steal your card details.
-            <br />
-            <br />
-            Another example is an email pretending to be from your bank or a
-            well known service like a streaming platform. It may claim there has
-            been suspicious login activity and ask you to reset your password.
-            The reset link leads to a convincing fake login page.
-            <br />
-            <br />
-            Phishing is also frequently used in workplace attacks. Employees may
-            receive emails that appear to come from their manager or IT
-            department, asking them to log in to a portal or download a file.
-            <br />
-            <br />
-            These attacks are especially dangerous because they exploit trust
-            and authority. According to the UK National Cyber Security Centre,
-            phishing remains one of the most common ways attackers gain access
-            to personal and organisational accounts. The Action Fraud reports
-            that millions of phishing related reports are submitted each year in
-            the UK alone.
-          </p>
-        </section> */}
-
-        {/* How to defend yourself */}
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-cyan-300">What to do</h2>
-          <p className="text-sm text-slate-300">
-            While phishing scams can look convincing, there are several common
-            warning signs that can help you spot them before any damage is done.
-            <br />
-            One of the most important things to check is the sender and the
-            link. Phishing emails often come from addresses that look similar to
-            real ones but include small spelling mistakes or extra characters.
-            Hovering over a link before clicking can reveal the real
-            destination, which may not match the organisation it claims to be
-            from.
-            <br />
-            <br />
-            Phishing messages often try to create urgency or fear. Messages that
-            say your account will be locked, money will be lost, or action is
-            required immediately are designed to rush you into making mistakes.
-            Legitimate organisations rarely pressure users to act instantly via
-            email or text.
-            <br />
-            <br />
-            Another warning sign is being asked for sensitive information.
-            Reputable companies will not ask you to provide passwords, full card
-            details, or one time passcodes through links, emails, or messages.
-            If you are unsure, it is safer to go directly to the organisation’s
-            official website instead of clicking the link provided.
-            <br />
-            <br />
-            Using security features can also reduce risk. Many services offer
-            multi factor authentication, which can prevent attackers from
-            accessing your account even if your password is stolen. Keeping your
-            devices and browsers up to date also helps protect against known
-            threats. The UK National Cyber Security Centre advises users to
-            stop, think, and check before interacting with unexpected messages,
-            while Action Fraud recommends reporting suspected phishing attempts
-            to help protect others.
-          </p>
-        </section>
-
-        {/* Explanation of scenario */}
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-cyan-300">
-            Scenario overview
-          </h2>
-
-          <p className="text-sm text-slate-300">
-            You will receive a mix of legitimate and malicious emails, including
-            account confirmations, password resets, invoices, shared documents,
-            and crypto wallet alerts. Your task is to decide whether each email
-            is safe or a phishing attempt
-          </p>
-
-          <ul className="text-sm text-slate-300 list-disc list-inside space-y-1">
-            <li>
-              Inspect links by clicking them to reveal the full destination URL.
-            </li>
-            <li>
-              Check sender addresses for unusual spellings, mismatched domains,
-              or odd formatting.
-            </li>
-            <li>
-              Look for pressure tactics, inconsistencies, and grammar or
-              formatting mistakes.
-            </li>
-          </ul>
-        </section>
-
-        {/* Call to action */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-cyan-300">
-            Ready to try the simulation?
-          </h2>
-          <p className="text-sm text-slate-300">
-            When you start, a simulated terminal will appear below. Work through
-            your inbox as you would in a real job. At the end you will receive a
-            summary of your outcome.
-          </p>
-
-          <button
-            onClick={handleStart}
-            className="mt-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold rounded"
+          <p
+            style={{
+              color: "var(--text)",
+              fontSize: "0.95rem",
+              lineHeight: 1.8,
+              opacity: 0.82,
+              marginTop: "14px",
+            }}
           >
-            {started ? "Restart simulation" : "Play simulation"}
-          </button>
+            Phishing doesn't only happen through email. It can also occur
+            through text messages, social media, phone calls, and even QR codes.
+          </p>
         </section>
 
-        {/* Simulation mount point */}
-        <section id="phishing-simulator" className="pt-6">
-          {started && <MonitorFrame />}
-          {!started && (
-            <p className="text-xs text-slate-500">
-              Simulation will appear here after you click Play simulation.
+        {/* LEARNING OBJECTIVES */}
+        <section
+          className="fade-up d2"
+          style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+        >
+          <div className="section-label" style={{ marginBottom: "12px" }}>
+            // LEARNING OBJECTIVES
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+              gap: "14px",
+            }}
+          >
+            {[
+              {
+                num: "01",
+                title: "Recognise phishing emails",
+                body: "Spot subtle signals — urgency, weird requests, and mismatched sender details.",
+              },
+              {
+                num: "02",
+                title: "Identify fake login pages",
+                body: "Verify URLs and security indicators before entering passwords on any site.",
+              },
+              {
+                num: "03",
+                title: "Respond safely",
+                body: "Practice closing suspicious pages, deleting emails, and using official channels to verify activity.",
+              },
+            ].map((o) => (
+              <div key={o.num} className="obj-card">
+                <div
+                  className="mono"
+                  style={{
+                    fontSize: "0.65rem",
+                    color: "var(--neon)",
+                    opacity: 0.6,
+                    marginBottom: "6px",
+                  }}
+                >
+                  {o.num}
+                </div>
+                <div
+                  style={{
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: "#e0f0ec",
+                    marginBottom: "6px",
+                    letterSpacing: "0.03em",
+                  }}
+                >
+                  {o.title}
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.82rem",
+                    color: "var(--text)",
+                    lineHeight: 1.6,
+                    opacity: 0.75,
+                  }}
+                >
+                  {o.body}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* WHAT TO DO */}
+        <section
+          className="fade-up d3"
+          style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+        >
+          <div className="section-label" style={{ marginBottom: "12px" }}>
+            // DEFENSIVE POSTURE
+          </div>
+          <h2
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 700,
+              fontSize: "1.2rem",
+              color: "#e0f0ec",
+              margin: "0 0 16px",
+              letterSpacing: "0.05em",
+            }}
+          >
+            What to do
+          </h2>
+          <div className="info-card">
+            {[
+              "Check the sender address and hover over links before clicking — mismatched domains are a major red flag.",
+              "Beware of urgency or fear-based language. Legitimate organisations rarely pressure users to act instantly.",
+              "Never provide passwords, full card details, or one-time passcodes through links or messages.",
+              "If unsure, go directly to the organisation's official website rather than clicking any provided link.",
+              "Enable multi-factor authentication and keep devices up to date to reduce risk.",
+            ].map((item, i) => (
+              <div key={i} className="checklist-item">
+                <span className="checklist-icon">›</span>
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* SCENARIO OVERVIEW */}
+        <section
+          className="fade-up d4"
+          style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+        >
+          <div className="section-label" style={{ marginBottom: "12px" }}>
+            // SCENARIO OVERVIEW
+          </div>
+          <div className="info-card">
+            <p
+              style={{
+                color: "var(--text)",
+                fontSize: "0.92rem",
+                lineHeight: 1.75,
+                opacity: 0.85,
+                margin: "0 0 16px",
+              }}
+            >
+              You will receive a mix of legitimate and malicious emails —
+              account confirmations, password resets, invoices, shared
+              documents, and crypto wallet alerts. Your task is to decide
+              whether each email is safe or a phishing attempt.
             </p>
+            {[
+              "Inspect links by clicking them to reveal the full destination URL.",
+              "Check sender addresses for unusual spellings, mismatched domains, or odd formatting.",
+              "Look for pressure tactics, inconsistencies, and grammar or formatting mistakes.",
+            ].map((item, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  alignItems: "flex-start",
+                }}
+              >
+                <span
+                  className="mono"
+                  style={{
+                    color: "var(--neon)",
+                    fontSize: "0.7rem",
+                    marginTop: "3px",
+                    opacity: 0.7,
+                  }}
+                >
+                  ▸
+                </span>
+                <span
+                  style={{
+                    color: "var(--text)",
+                    fontSize: "0.88rem",
+                    lineHeight: 1.6,
+                    opacity: 0.8,
+                  }}
+                >
+                  {item}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section
+          className="fade-up d5"
+          style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+        >
+          <div className="section-label" style={{ marginBottom: "12px" }}>
+            // INITIATE SIMULATION
+          </div>
+          <div className="info-card" style={{ background: "var(--surface2)" }}>
+            <p
+              style={{
+                color: "var(--text)",
+                fontSize: "0.92rem",
+                lineHeight: 1.7,
+                opacity: 0.85,
+                margin: "0 0 20px",
+              }}
+            >
+              When you start, a simulated terminal will appear below. Work
+              through your inbox as you would in a real job. At the end you will
+              receive a summary of your outcome.
+            </p>
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <button onClick={handleStart} className="btn-primary">
+                {started ? "▶ RESTART SIMULATION" : "▶ PLAY SIMULATION"}
+              </button>
+              {started && (
+                <button
+                  className="btn-exit"
+                  onClick={() => {
+                    resetGame();
+                    setStarted(false);
+                  }}
+                >
+                  ✕ RESET
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* SIMULATOR */}
+        <section id="phishing-simulator" className="fade-up d6">
+          {started ? (
+            <div className="terminal-chrome">
+              <div className="terminal-chrome__bar">
+                <span
+                  className="terminal-dot"
+                  style={{ background: "var(--red)" }}
+                />
+                <span
+                  className="terminal-dot"
+                  style={{ background: "var(--amber)" }}
+                />
+                <span
+                  className="terminal-dot"
+                  style={{ background: "var(--neon)" }}
+                />
+                <span className="terminal-chrome__title">
+                  phishing-sim — inbox
+                </span>
+              </div>
+              <MonitorFrame />
+            </div>
+          ) : (
+            <div
+              className="mono"
+              style={{
+                color: "var(--text-dim)",
+                fontSize: "0.7rem",
+                padding: "20px",
+                textAlign: "center",
+                opacity: 0.5,
+              }}
+            >
+              [ simulation will appear here after you click PLAY SIMULATION ]
+            </div>
           )}
         </section>
       </div>

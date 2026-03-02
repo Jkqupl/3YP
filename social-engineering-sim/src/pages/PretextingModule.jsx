@@ -11,243 +11,366 @@ export default function PretextingModule() {
     usePretextingStore.getState().resetGame();
     setStarted(true);
   };
-
   const onExit = () => {
     usePretextingStore.getState().resetGame();
     setStarted(false);
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-      <div className="w-full max-w-6xl bg-slate-950 shadow-xl rounded-xl overflow-hidden">
-        {!started && (
-          <div className="text-sm text-slate-400 px-10 pt-6">
-            <Link to="/" className="text-cyan-400 hover:text-cyan-300">
-              Home
-            </Link>
-            <span className="mx-1">/</span>
-            <span>Pretexting Module</span>
+    <div style={{ minHeight: "100vh" }}>
+      <div className="top-bar" />
+
+      <nav className="app-nav">
+        <span
+          className="mono"
+          style={{
+            color: "var(--neon)",
+            fontSize: "0.75rem",
+            letterSpacing: "0.12em",
+          }}
+        >
+          <span style={{ opacity: 0.5 }}>~/</span>SE-SIM
+        </span>
+        <div className="module-badge">MODULE: PRETEXTING</div>
+      </nav>
+
+      {!started ? (
+        <div className="page-container">
+          {/* Breadcrumb */}
+          <div className="breadcrumb fade-up">
+            <Link to="/">~/home</Link>
+            <span className="breadcrumb__sep">/</span>
+            <span className="breadcrumb__current">pretexting-module</span>
           </div>
-        )}
 
-        {!started ? (
-          <div className="p-10 space-y-10">
-            {/* Intro */}
-            <div className="flex items-start justify-between gap-6">
-              <div className="space-y-4">
-                <h1 className="text-3xl font-bold text-cyan-300">Pretexting</h1>
-                <p className="text-slate-300">
-                  {/* Pretexting is a type of social engineering attack that people
-                  often fall for without realising it. Instead of sending a
-                  suspicious link, the attacker creates a believable situation
-                  and uses it to gain your trust. You may have already
-                  encountered this without knowing the name for it.
-                  <br />
-                  <br />
-                  If you have ever received a call from someone claiming to be
-                  from IT support, a bank, or a delivery company and asking you
-                  to confirm some details, that could have been a pretexting
-                  attempt.
-                  <br />
-                  <br />
-                  These attacks work because the request often sounds reasonable
-                  and fits into everyday situations. When the story feels
-                  normal, people are less likely to question it. */}
-                  Pretexting is a type of cyber attack where someone invents a
-                  fake story or role in order to trick you into giving them
-                  sensitive information.
-                  <br />
-                  <br />
-                  This can include login details, personal information, security
-                  answers, or access to systems or buildings. Unlike phishing,
-                  which often relies on emails and fake websites, pretexting
-                  usually involves direct interaction. This could be through
-                  phone calls, messages, or face to face conversations.
-                  <br />
-                  <br />
-                  Attackers often sound confident and prepared. They may already
-                  know some basic information about you or your organisation,
-                  which helps make the story feel real. By building trust first,
-                  they lower your guard before making their request.
-                  <br />
-                  <br />
-                  Pretexting works because it targets human behaviour rather
-                  than technology. It relies on trust, authority, and the
-                  natural instinct to be helpful.
-                </p>
-              </div>
+          {/* HERO */}
+          <section
+            className="fade-up d1"
+            style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+          >
+            <div className="section-label" style={{ marginBottom: "10px" }}>
+              // THREAT VECTOR 02
             </div>
+            <h1
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontSize: "clamp(1.8rem,5vw,3rem)",
+                fontWeight: 700,
+                color: "var(--neon)",
+                margin: "0 0 16px",
+                letterSpacing: "0.02em",
+                textShadow: "0 0 30px rgba(34,255,224,0.2)",
+                lineHeight: 1.1,
+              }}
+            >
+              Pretexting
+            </h1>
+            <p
+              style={{
+                color: "var(--text)",
+                fontSize: "clamp(0.9rem,2.2vw,1rem)",
+                lineHeight: 1.75,
+                maxWidth: "700px",
+                opacity: 0.85,
+                margin: 0,
+              }}
+            >
+              Pretexting is a type of cyber attack where someone invents a fake
+              story or role in order to trick you into giving them sensitive
+              information — login details, personal data, security answers, or
+              physical access.
+            </p>
+          </section>
 
-            {/* Learning objectives */}
-            <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-cyan-300">
-                Learning objectives
-              </h2>
-              <section className="grid md:grid-cols-3 gap-6">
-                <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-                  <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-                    Understand what pretexting is
-                  </h2>
-                  <p className="text-xs text-slate-300">
-                    Learn how attackers use believable stories to get
-                    information or access without needing to hack anything.
-                  </p>
-                </div>
-                <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-                  <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-                    Spot common pretexting scenarios
-                  </h2>
-                  <p className="text-xs text-slate-300">
-                    Recognise common roles like IT support, delivery, HR, and
-                    contractors, and the red flags that come with them.
-                  </p>
-                </div>
-                <div className="bg-slate-900/80 border border-cyan-800 rounded-lg p-4">
-                  <h2 className="text-sm font-semibold text-cyan-300 mb-2">
-                    Respond safely and consistently
-                  </h2>
-                  <p className="text-xs text-slate-300">
-                    Practice simple verification steps that stop most attempts
-                    without getting dragged into the story.
-                  </p>
-                </div>
-              </section>
-            </section>
+          <hr
+            className="neon-divider fade-up d1"
+            style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+          />
 
-            {/* Concept explanation */}
-            <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-cyan-300"></h2>
-              <p className="text-sm text-slate-300"></p>
-            </section>
+          {/* BODY */}
+          <section
+            className="fade-up d2"
+            style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+          >
+            <p
+              style={{
+                color: "var(--text)",
+                fontSize: "0.95rem",
+                lineHeight: 1.8,
+                opacity: 0.82,
+              }}
+            >
+              Unlike phishing, which often relies on emails and fake websites,
+              pretexting usually involves direct interaction — phone calls,
+              messages, or face-to-face conversations. Attackers often sound
+              confident and prepared, and may already know basic information
+              about you or your organisation, which helps make the story feel
+              real.
+            </p>
+            <p
+              style={{
+                color: "var(--text)",
+                fontSize: "0.95rem",
+                lineHeight: 1.8,
+                opacity: 0.82,
+                marginTop: "14px",
+              }}
+            >
+              By building trust first, they lower your guard before making their
+              request. Pretexting works because it targets human behaviour
+              rather than technology — it relies on trust, authority, and the
+              natural instinct to be helpful.
+            </p>
+          </section>
 
-            {/* Examples */}
-            {/* <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-cyan-300">
-                Examples in real life
-              </h2>
-              <p className="text-sm text-slate-300">
-                A common example is a phone call from someone claiming to be
-                from IT support. They might say there is a problem with your
-                account and ask you to confirm your username or reset your
-                password while they stay on the line.
-                <br />
-                <br />
-                Another example is an email pretending to be from HR or finance,
-                asking for personal details or payment information as part of an
-                urgent task. Because the request sounds work related, it often
-                does not raise suspicion.
-                <br />
-                <br />
-                Pretexting can also happen in person. Someone may pretend to be
-                a new employee, contractor, or visitor who needs help accessing
-                a building or restricted area. By acting confused or stressed,
-                they encourage others to help without checking credentials.
-                <br />
-                <br />
-                According to the UK National Cyber Security Centre, social
-                engineering attacks like pretexting are common because they are
-                simple to carry out and highly effective.
-              </p>
-            </section> */}
-
-            {/* What to do */}
-            <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-cyan-300">
-                What to do
-              </h2>
-              <p className="text-sm text-slate-300">
-                When someone asks for sensitive information or access, take a
-                moment to stop and think about whether the request makes sense.
-                Even if the story sounds convincing, it is okay to question it.
-                <br />
-                <br />
-                Do not share passwords, one time passcodes, or personal
-                information just because someone asks for it. Legitimate
-                organisations will not pressure you into giving this information
-                without proper verification.
-                <br />
-                <br />
-                If you are unsure, use a trusted method to check the request.
-                This could mean contacting the organisation directly using
-                official contact details, or checking with a colleague or
-                supervisor.
-                <br />
-                <br />
-                Action Fraud recommends reporting suspicious calls or messages
-                so that patterns can be identified and others can be protected.
-              </p>
-            </section>
-
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-cyan-300">
-                What you will practice
-              </h2>
-              <p className="text-sm text-slate-300">
-                To help you understand what makes pretexting effective, you will
-                now try to be an attacker and build your own pretexts.
-                <br />
-                In each round, you will be given a situation and need to:
-              </p>
-              <ul className="list-disc list-inside text-slate-300 space-y-2">
-                <li>Build a realistic pretext scenario</li>
-                <li>Apply pressure using authority or urgency</li>
-                <li>Learn why each decision succeeds or fails</li>
-                <li>Choose the safest response</li>
-              </ul>
-              <p className="text-sm text-slate-300">
-                Note : This is a training exercise. In real life, pretexting is
-                illegal and unethical.
-              </p>
-
-              <div className="pt-2">
-                <button
-                  onClick={onStart}
-                  className="px-6 py-3 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold"
-                >
-                  Start module
-                </button>
-                <p className="text-slate-400 text-sm mt-2">
-                  5 short scenarios. Each round gives instant feedback.
-                </p>
-              </div>
-
-              <div className="pt-6 text-xs text-slate-500 space-y-1">
-                <div>Sources:</div>
-                <div>
-                  UK NCSC: Social engineering guidance (pretexting examples and
-                  advice)
-                </div>
-                <div>Action Fraud: Social engineering and reporting advice</div>
-              </div>
+          {/* LEARNING OBJECTIVES */}
+          <section
+            className="fade-up d2"
+            style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+          >
+            <div className="section-label" style={{ marginBottom: "12px" }}>
+              // LEARNING OBJECTIVES
             </div>
-          </div>
-        ) : (
-          <div className="h-[78vh] w-full flex flex-col">
-            <div className="flex-1 overflow-auto">
-              <PretextingBuilder
-                onFinish={() => {
-                  const ending = computeEnding();
-                  alert(`Module complete: ${ending}`);
-                  onExit();
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+                gap: "14px",
+              }}
+            >
+              {[
+                {
+                  num: "01",
+                  title: "Understand what pretexting is",
+                  body: "Learn how attackers use believable stories to get information or access without hacking anything.",
+                },
+                {
+                  num: "02",
+                  title: "Spot common scenarios",
+                  body: "Recognise roles like IT support, delivery, HR, and contractors — and the red flags that come with them.",
+                },
+                {
+                  num: "03",
+                  title: "Respond safely",
+                  body: "Practice simple verification steps that stop most attempts without getting dragged into the story.",
+                },
+              ].map((o) => (
+                <div key={o.num} className="obj-card">
+                  <div
+                    className="mono"
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "var(--neon)",
+                      opacity: 0.6,
+                      marginBottom: "6px",
+                    }}
+                  >
+                    {o.num}
+                  </div>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: "0.9rem",
+                      color: "#e0f0ec",
+                      marginBottom: "6px",
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    {o.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "var(--text)",
+                      lineHeight: 1.6,
+                      opacity: 0.75,
+                    }}
+                  >
+                    {o.body}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* WHAT TO DO */}
+          <section
+            className="fade-up d3"
+            style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+          >
+            <div className="section-label" style={{ marginBottom: "12px" }}>
+              // DEFENSIVE POSTURE
+            </div>
+            <h2
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 700,
+                fontSize: "1.2rem",
+                color: "#e0f0ec",
+                margin: "0 0 16px",
+                letterSpacing: "0.05em",
+              }}
+            >
+              What to do
+            </h2>
+            <div className="info-card">
+              {[
+                "Stop and think before giving sensitive information to anyone, even if their story sounds convincing.",
+                "Never share passwords, one-time passcodes, or personal info just because someone asks.",
+                "Use a trusted method to verify the request — official contact details, not anything they give you.",
+                "Check with a colleague or supervisor if you're unsure about an unusual request.",
+                "Report suspicious calls or messages to Action Fraud so patterns can be identified.",
+              ].map((item, i) => (
+                <div key={i} className="checklist-item">
+                  <span className="checklist-icon">›</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* SIMULATION BRIEF */}
+          <section
+            className="fade-up d4"
+            style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+          >
+            <div className="section-label" style={{ marginBottom: "12px" }}>
+              // SIMULATION BRIEF
+            </div>
+            <div className="info-card">
+              <p
+                style={{
+                  color: "var(--text)",
+                  fontSize: "0.92rem",
+                  lineHeight: 1.75,
+                  opacity: 0.85,
+                  margin: "0 0 16px",
                 }}
-              />
-            </div>
-
-            <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
-              <div className="text-slate-400 text-sm">
-                Tip: If the request is high risk, slow down and verify using an
-                official channel.
-              </div>
-              <button
-                onClick={onExit}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100"
               >
-                Exit module
-              </button>
+                To help you understand what makes pretexting effective, you'll
+                try to be an attacker and build your own pretexts. In each round
+                you will:
+              </p>
+              {[
+                "Build a realistic pretext scenario",
+                "Apply pressure using authority or urgency",
+                "Learn why each decision succeeds or fails",
+                "Choose the safest response",
+              ].map((item, i, arr) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    alignItems: "flex-start",
+                    padding: "7px 0",
+                    borderBottom:
+                      i < arr.length - 1
+                        ? "1px solid rgba(34,255,224,0.06)"
+                        : "none",
+                  }}
+                >
+                  <span
+                    className="mono"
+                    style={{
+                      color: "var(--neon)",
+                      fontSize: "0.7rem",
+                      marginTop: "3px",
+                      opacity: 0.7,
+                    }}
+                  >
+                    ▸
+                  </span>
+                  <span
+                    style={{
+                      color: "var(--text)",
+                      fontSize: "0.88rem",
+                      lineHeight: 1.6,
+                      opacity: 0.8,
+                    }}
+                  >
+                    {item}
+                  </span>
+                </div>
+              ))}
             </div>
+          </section>
+
+          {/* CTA */}
+          <section
+            className="fade-up d5"
+            style={{ marginBottom: "clamp(28px,4vw,48px)" }}
+          >
+            <div className="warning-banner" style={{ marginBottom: "20px" }}>
+              <span
+                className="mono"
+                style={{
+                  color: "rgba(255,64,64,0.8)",
+                  fontSize: "0.75rem",
+                  marginTop: "2px",
+                }}
+              >
+                ⚠
+              </span>
+              <span
+                style={{
+                  color: "rgba(255,64,64,0.75)",
+                  fontSize: "0.85rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                Training exercise only. In real life, pretexting is illegal and
+                unethical.
+              </span>
+            </div>
+            <button onClick={onStart} className="btn-primary">
+              ▶ START SIMULATION
+            </button>
+            <div
+              className="mono"
+              style={{
+                color: "var(--text-dim)",
+                fontSize: "0.68rem",
+                marginTop: "10px",
+                letterSpacing: "0.06em",
+              }}
+            >
+              5 SHORT SCENARIOS · INSTANT FEEDBACK ON EACH
+            </div>
+          </section>
+
+          {/* Sources */}
+          <div className="sources fade-up d5">
+            <div className="sources__label">// SOURCES</div>
+            <div>UK NCSC: Social engineering guidance</div>
+            <div>Action Fraud: Social engineering and reporting advice</div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* SIMULATION VIEW */
+        <div
+          style={{
+            height: "calc(100vh - 50px)",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ flex: 1, overflow: "auto" }}>
+            <PretextingBuilder
+              onFinish={() => {
+                const ending = computeEnding();
+                alert(`Module complete: ${ending}`);
+                onExit();
+              }}
+            />
+          </div>
+          <div className="sim-bar">
+            <button onClick={onExit} className="btn-exit">
+              ✕ EXIT SIMULATION
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,41 +7,72 @@ export default function TailgatingSimulation() {
   const gameRef = useRef(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    let rafId;
+    let ro;
 
-    const config = {
-      type: Phaser.AUTO,
-      parent: containerRef.current,
-      width: containerRef.current.clientWidth,
-      height: containerRef.current.clientHeight,
-      backgroundColor: "#0b0f14",
-      physics: {
-        default: "arcade",
-        arcade: { debug: false },
-      },
-      scene: [TailgatingScene],
-      scale: {
-        mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-      },
-    };
+    function bootPhaser() {
+      const el = containerRef.current;
+      if (!el) return;
 
-    gameRef.current = new Phaser.Game(config);
+      const w = el.clientWidth;
+      const h = el.clientHeight;
 
-    const ro = new ResizeObserver(() => {
-      const w = containerRef.current?.clientWidth ?? 800;
-      const h = containerRef.current?.clientHeight ?? 600;
-      gameRef.current?.scale.resize(w, h);
-    });
+      // Retry next frame if the container hasn't been sized yet
+      if (w === 0 || h === 0) {
+        rafId = requestAnimationFrame(bootPhaser);
+        return;
+      }
 
-    ro.observe(containerRef.current);
+      const config = {
+        type: Phaser.AUTO,
+        parent: el,
+        width: w,
+        height: h,
+        backgroundColor: "#0b0f14",
+        physics: {
+          default: "arcade",
+          arcade: { debug: false },
+        },
+        scene: [TailgatingScene],
+        scale: {
+          mode: Phaser.Scale.RESIZE,
+          autoCenter: Phaser.Scale.CENTER_BOTH,
+        },
+      };
+
+      gameRef.current = new Phaser.Game(config);
+
+      // Keep Phaser in sync when the container is resized
+      ro = new ResizeObserver(() => {
+        const cw = containerRef.current?.clientWidth;
+        const ch = containerRef.current?.clientHeight;
+        if (cw && ch) {
+          gameRef.current?.scale.resize(cw, ch);
+        }
+      });
+      ro.observe(el);
+    }
+
+    // One rAF so the browser has painted the fixed-position container
+    // and resolved its pixel dimensions before Phaser reads them
+    rafId = requestAnimationFrame(bootPhaser);
 
     return () => {
-      ro.disconnect();
+      cancelAnimationFrame(rafId);
+      ro?.disconnect();
       gameRef.current?.destroy(true);
       gameRef.current = null;
     };
   }, []);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  /*
+    The parent div is position:fixed with an explicit calc() height.
+    This div fills it 100% — no percentage ambiguity.
+  */
+  return (
+    <div
+      ref={containerRef}
+      style={{ width: "100%", height: "100%", display: "block" }}
+    />
+  );
 }
