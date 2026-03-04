@@ -177,27 +177,41 @@ ${wrappedBody}
     return `
   <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-     body{
-  margin:0;
-  background:#eef1f4;
-  font-family: Arial, Helvetica, sans-serif;
-  padding:24px 12px; /* simulate inbox reading area */
-}
+      *, *::before, *::after { box-sizing: border-box; }
 
-/* email container */
-body > *{
-  max-width:600px;
-  margin:0 auto;
-  box-shadow:0 2px 8px rgba(0,0,0,0.08);
-}
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #eef1f4;
+        font-family: Arial, Helvetica, sans-serif;
+        /* Never allow horizontal scroll inside the iframe */
+        overflow-x: hidden;
+        width: 100%;
+      }
 
+      body {
+        padding: 20px 16px;
+      }
 
-      img{max-width:100%!important;height:auto!important}
-      table{max-width:100%!important}
-      a,button{min-height:44px}
+      /* Email wrapper — responsive, never wider than the iframe */
+      .email-wrap {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+      }
 
+      /* Force all common email elements to stay in bounds */
+      img  { max-width: 100% !important; height: auto !important; display: block; }
+      table, td, th { max-width: 100% !important; }
+      table { width: 100% !important; table-layout: fixed !important; }
+      pre, code { white-space: pre-wrap; word-break: break-word; }
+      a { word-break: break-all; }
+      * { max-width: 100%; }
     </style>
 
     <script>
@@ -216,29 +230,23 @@ function send(type, href){
 document.addEventListener('pointerdown', e=>{
   const a = findLink(e.target);
   if(!a) return;
-
   e.preventDefault();
   e.stopImmediatePropagation();
-
-  const href = a.getAttribute('href') || '';
-  send('EMAIL_LINK_CLICK', href);
+  send('EMAIL_LINK_CLICK', a.getAttribute('href') || '');
 }, true);
 
-/* hover preview */
 document.addEventListener('mouseover', e=>{
   const a = findLink(e.target);
   if(!a) return;
   send('EMAIL_LINK_HOVER', a.getAttribute('href') || '');
 }, true);
 
-/* block ALL navigation attempts */
 document.addEventListener('click', e=>{
   if(findLink(e.target)) e.preventDefault();
 }, true);
 </script>
-
   </head>
-  <body>${html}</body>
+  <body><div class="email-wrap">${html}</div></body>
   </html>`;
   }
 

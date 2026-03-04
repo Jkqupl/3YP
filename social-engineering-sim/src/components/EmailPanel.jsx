@@ -156,15 +156,20 @@ export default function EmailPanel({ mobile = false, onBack }) {
               {decision === "real" ? "✓ Safe" : "Safe"}
             </button>
           </div>
-
-          {urlPreview?.href ? (
-            <div className="text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 max-w-md">
-              <div className="text-slate-400">URL preview</div>
-              <div className="break-all">{urlPreview.href}</div>
-            </div>
-          ) : null}
         </div>
       </div>
+
+      {/* URL preview bar — full width, below the header row, never clipped */}
+      {urlPreview?.href && (
+        <div className="w-full rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 flex items-start gap-2">
+          <span className="text-slate-400 text-xs shrink-0 pt-0.5 font-mono">
+            URL
+          </span>
+          <span className="text-xs text-slate-200 font-mono break-all leading-relaxed">
+            {urlPreview.href}
+          </span>
+        </div>
+      )}
 
       {allAnswered &&
         (() => {

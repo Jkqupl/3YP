@@ -1,9 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import PhishingModule from "./pages/PhishingModule";
-import TailgatingModule from "./pages/TailgatingModule";
-import PretextingModule from "./pages/PretextingModule";
+import ModuleRunner from "./pages/ModuleRunner";
 import "./styles/global.css";
 
 export default function App() {
@@ -11,9 +9,8 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/module/phishing" element={<PhishingModule />} />
-        <Route path="/module/tailgating" element={<TailgatingModule />} />
-        <Route path="/module/pretexting" element={<PretextingModule />} />
+        {/* Single unified route — surveys + simulation live here, no page change */}
+        <Route path="/module/:moduleId" element={<ModuleRunner />} />
       </Routes>
     </Router>
   );

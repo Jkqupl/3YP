@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import MonitorFrame from "../components/MonitorFrame";
 import { useGameStore } from "../state/useGameStore";
 
-export default function PhishingModule() {
-  const [started, setStarted] = useState(false);
+export default function PhishingModule({ onComplete } = {}) {
+  const [started, setStarted] = useState(Boolean(onComplete));
   const resetGame = useGameStore((state) => state.resetGame);
 
   const handleStart = () => {
@@ -14,6 +14,15 @@ export default function PhishingModule() {
       const el = document.getElementById("phishing-simulator");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
+  };
+
+  const handleFinish = () => {
+    if (onComplete) {
+      onComplete();
+    } else {
+      resetGame();
+      setStarted(false);
+    }
   };
 
   return (
@@ -328,14 +337,8 @@ export default function PhishingModule() {
                 {started ? "▶ RESTART SIMULATION" : "▶ PLAY SIMULATION"}
               </button>
               {started && (
-                <button
-                  className="btn-exit"
-                  onClick={() => {
-                    resetGame();
-                    setStarted(false);
-                  }}
-                >
-                  ✕ RESET
+                <button className="btn-exit" onClick={handleFinish}>
+                  {onComplete ? "✓ FINISH" : "✕ RESET"}
                 </button>
               )}
             </div>

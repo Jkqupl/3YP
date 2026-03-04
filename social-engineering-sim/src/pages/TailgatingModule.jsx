@@ -8,7 +8,7 @@ const BAR_H = 2;
 const SIMBAR_H = 48;
 const CHROME_H = BAR_H + NAV_H; // 50px total above the canvas
 
-export default function TailgatingModule() {
+export default function TailgatingModule({ onComplete } = {}) {
   const [started, setStarted] = useState(false);
   const ending = useTailgatingStore((s) => s.ending);
 
@@ -18,7 +18,11 @@ export default function TailgatingModule() {
   };
   const onExit = () => {
     useTailgatingStore.getState().resetGame();
-    setStarted(false);
+    if (onComplete) {
+      onComplete();
+    } else {
+      setStarted(false);
+    }
   };
 
   return (
@@ -386,30 +390,41 @@ export default function TailgatingModule() {
             }}
           >
             {ending ? (
-              <div className="result-banner" style={{ flex: 1 }}>
-                <span
-                  className="mono"
-                  style={{
-                    color: "var(--text-dim)",
-                    fontSize: "0.68rem",
-                    letterSpacing: "0.1em",
-                  }}
-                >
-                  RESULT &nbsp;
-                </span>
-                <span
-                  style={{
-                    fontWeight: 600,
-                    color: "var(--neon)",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  {ending}
-                </span>
-              </div>
+              <>
+                <div className="result-banner" style={{ flex: 1 }}>
+                  <span
+                    className="mono"
+                    style={{
+                      color: "var(--text-dim)",
+                      fontSize: "0.68rem",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    RESULT &nbsp;
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--neon)",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {ending}
+                  </span>
+                </div>
+                {onComplete && (
+                  <button
+                    onClick={onExit}
+                    className="btn-primary"
+                    style={{ fontSize: "0.75rem", letterSpacing: "0.08em" }}
+                  >
+                    Continue to survey →
+                  </button>
+                )}
+              </>
             ) : (
               <button onClick={onExit} className="btn-exit">
-                ✕ EXIT SIMULATION
+                {onComplete ? "✓ FINISH SIMULATION" : "✕ EXIT SIMULATION"}
               </button>
             )}
           </div>

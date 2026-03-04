@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import PretextingBuilder from "../components/pretexting/PretextingBuilder";
 import { usePretextingStore } from "../state/usePretextingStore";
 
-export default function PretextingModule() {
+export default function PretextingModule({ onComplete } = {}) {
   const [started, setStarted] = useState(false);
   const computeEnding = usePretextingStore((s) => s.computeEnding);
 
@@ -13,7 +13,11 @@ export default function PretextingModule() {
   };
   const onExit = () => {
     usePretextingStore.getState().resetGame();
-    setStarted(false);
+    if (onComplete) {
+      onComplete();
+    } else {
+      setStarted(false);
+    }
   };
 
   return (
@@ -358,8 +362,6 @@ export default function PretextingModule() {
           <div style={{ flex: 1, overflow: "auto" }}>
             <PretextingBuilder
               onFinish={() => {
-                const ending = computeEnding();
-                alert(`Module complete: ${ending}`);
                 onExit();
               }}
             />
