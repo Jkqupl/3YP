@@ -22,92 +22,97 @@
 
 // ── Shared pre-survey (asked before every module) ──────────────────────────
 
-const SHARED_PRE = [
-  {
-    id: "confidence_pre",
-    type: "scale",
-    text: "How confident are you in your ability to recognise and respond to this type of attack?",
-    required: true,
-    low: "Not at all confident",
-    high: "Very confident",
-  },
-  {
-    id: "familiarity",
-    type: "scale",
-    text: "Before this module, how much did you know about this type of social engineering attack?",
-    required: true,
-    low: "Nothing at all",
-    high: "A great deal",
-  },
-  {
-    id: "prior_encounter",
-    type: "radio",
-    text: "Have you personally encountered this type of attack before?",
-    required: true,
-    options: [
-      { value: "yes_recognised", label: "Yes, and I recognised it at the time" },
-      { value: "yes_fell_for",   label: "Yes, and I only realised afterwards" },
-      { value: "no",             label: "No" },
-      { value: "unsure",         label: "I'm not sure" },
-    ],
-  },
-];
+// label = human-readable module name e.g. "phishing", "tailgating", "pretexting"
+function sharedPre(label) {
+  return [
+    {
+      id: "confidence_pre",
+      type: "scale",
+      text: `How confident are you in your ability to recognise and respond to a ${label} attack?`,
+      required: true,
+      low: "Not at all confident",
+      high: "Very confident",
+    },
+    {
+      id: "familiarity",
+      type: "scale",
+      text: `Before this module, how much did you know about ${label} as a social engineering attack?`,
+      required: true,
+      low: "Nothing at all",
+      high: "A great deal",
+    },
+    {
+      id: "prior_encounter",
+      type: "radio",
+      text: `Have you personally encountered a ${label} attack before?`,
+      required: true,
+      options: [
+        { value: "yes_recognised", label: "Yes, and I recognised it at the time" },
+        { value: "yes_fell_for",   label: "Yes, and I only realised afterwards" },
+        { value: "no",             label: "No" },
+        { value: "unsure",         label: "I'm not sure" },
+      ],
+    },
+  ];
+}
 
 // ── Shared post-survey (asked after every module) ──────────────────────────
 
-const SHARED_POST = [
-  {
-    id: "confidence_post",
-    // Intentionally mirrors confidence_pre — enables direct pre/post comparison
-    type: "scale",
-    text: "How confident are you now in your ability to recognise and respond to this type of attack?",
-    required: true,
-    low: "Not at all confident",
-    high: "Very confident",
-  },
-  {
-    id: "difficulty",
-    type: "scale",
-    text: "How difficult did you find the simulation overall?",
-    required: true,
-    low: "Very easy",
-    high: "Very difficult",
-  },
-  {
-    id: "realism",
-    type: "scale",
-    text: "How realistic did the scenarios feel compared to a real-life situation?",
-    required: true,
-    low: "Not realistic at all",
-    high: "Very realistic",
-  },
-  {
-    id: "engagement",
-    type: "scale",
-    text: "How engaging did you find the simulation as a learning tool?",
-    required: true,
-    low: "Not engaging at all",
-    high: "Very engaging",
-  },
-  {
-    id: "behaviour_intent",
-    type: "radio",
-    text: "After completing this module, how likely are you to change how you respond to this type of attack in real life?",
-    required: true,
-    options: [
-      { value: "very_likely",    label: "Very likely — I know what to do differently now" },
-      { value: "somewhat",       label: "Somewhat — I'm more aware, but not sure I'd act differently" },
-      { value: "unlikely",       label: "Unlikely — I already behaved this way" },
-      { value: "no_change",      label: "No change — I didn't find it useful" },
-    ],
-  },
-  {
-    id: "freetext",
-    type: "text",
-    text: "Is there anything the simulation did particularly well, or anything that could be improved? (optional)",
-    required: false,
-  },
-];
+function sharedPost(label) {
+  return [
+    {
+      id: "confidence_post",
+      // Intentionally mirrors confidence_pre — enables direct pre/post comparison
+      type: "scale",
+      text: `How confident are you now in your ability to recognise and respond to a ${label} attack?`,
+      required: true,
+      low: "Not at all confident",
+      high: "Very confident",
+    },
+    {
+      id: "difficulty",
+      type: "scale",
+      text: `How difficult did you find the ${label} simulation overall?`,
+      required: true,
+      low: "Very easy",
+      high: "Very difficult",
+    },
+    {
+      id: "realism",
+      type: "scale",
+      text: `How realistic did the ${label} scenarios feel compared to a real-life situation?`,
+      required: true,
+      low: "Not realistic at all",
+      high: "Very realistic",
+    },
+    {
+      id: "engagement",
+      type: "scale",
+      text: `How engaging did you find the ${label} simulation as a learning tool?`,
+      required: true,
+      low: "Not engaging at all",
+      high: "Very engaging",
+    },
+    {
+      id: "behaviour_intent",
+      type: "radio",
+      text: `After completing the ${label} module, how likely are you to change how you respond to a ${label} attack in real life?`,
+      required: true,
+      options: [
+        { value: "very_likely",    label: "Very likely — I know what to do differently now" },
+        { value: "somewhat",       label: "Somewhat — I'm more aware, but not sure I'd act differently" },
+        { value: "unlikely",       label: "Unlikely — I already behaved this way" },
+        { value: "no_change",      label: "No change — I didn't find it useful" },
+      ],
+    },
+    {
+      id: "freetext",
+      type: "text",
+      text: `Is there anything the ${label} simulation did particularly well, or anything that could be improved? (optional)`,
+      required: false,
+    },
+  ];
+}
 
 
 // ── PHISHING ───────────────────────────────────────────────────────────────
@@ -115,7 +120,7 @@ const SHARED_POST = [
 export const SURVEY_SCHEMAS = {
   phishing: {
     pre: [
-      ...SHARED_PRE,
+      ...sharedPre("phishing"),
       {
         id: "phish_spot_cues",
         type: "radio",
@@ -143,7 +148,7 @@ export const SURVEY_SCHEMAS = {
     ],
 
     post: [
-      ...SHARED_POST,
+      ...sharedPost("phishing"),
       {
         id: "phish_key_learning",
         type: "radio",
@@ -176,7 +181,7 @@ export const SURVEY_SCHEMAS = {
 
   tailgating: {
     pre: [
-      ...SHARED_PRE,
+      ...sharedPre("tailgating"),
       {
         id: "tailgate_door_habit",
         type: "radio",
@@ -200,7 +205,7 @@ export const SURVEY_SCHEMAS = {
     ],
 
     post: [
-      ...SHARED_POST,
+      ...sharedPost("tailgating"),
       {
         id: "tailgate_pressure_handling",
         type: "radio",
@@ -233,7 +238,7 @@ export const SURVEY_SCHEMAS = {
 
   pretexting: {
     pre: [
-      ...SHARED_PRE,
+      ...sharedPre("pretexting"),
       {
         id: "pretext_authority_response",
         type: "radio",
@@ -261,7 +266,7 @@ export const SURVEY_SCHEMAS = {
     ],
 
     post: [
-      ...SHARED_POST,
+      ...sharedPost("pretexting"),
       {
         id: "pretext_attacker_perspective",
         type: "radio",
