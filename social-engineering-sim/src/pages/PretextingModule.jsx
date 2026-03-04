@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import PretextingBuilder from "../components/pretexting/PretextingBuilder";
 import { usePretextingStore } from "../state/usePretextingStore";
+import { useSurveyStore } from "../state/useSurveyStore";
 
 export default function PretextingModule({ onComplete } = {}) {
   const [started, setStarted] = useState(false);
@@ -12,6 +13,15 @@ export default function PretextingModule({ onComplete } = {}) {
     setStarted(true);
   };
   const onExit = () => {
+    if (onComplete) {
+      const s = usePretextingStore.getState();
+      useSurveyStore.getState().snapshotMetrics({
+        ending: s.computeEnding(),
+        secureRounds: s.stats.secureRounds,
+        correctVerification: s.stats.correctVerification,
+        totalRounds: s.totalRounds,
+      });
+    }
     usePretextingStore.getState().resetGame();
     if (onComplete) {
       onComplete();

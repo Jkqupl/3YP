@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import TailgatingSimulation from "../game/TailgatingSimulation";
 import { useTailgatingStore } from "../state/useTailgatingStore";
+import { useSurveyStore } from "../state/useSurveyStore";
 
 const NAV_H = 48;
 const BAR_H = 2;
@@ -17,6 +18,18 @@ export default function TailgatingModule({ onComplete } = {}) {
     setStarted(true);
   };
   const onExit = () => {
+    if (onComplete) {
+      // Snapshot metrics BEFORE reset so they survive into the post-survey
+      const s = useTailgatingStore.getState();
+      useSurveyStore.getState().snapshotMetrics({
+        ending: s.ending,
+        securityRisk: s.securityRisk,
+        socialPressure: s.socialPressure,
+        maxPressure: s.maxPressure,
+        breachOccurred: s.breachOccurred,
+        incidents: s.incidents,
+      });
+    }
     useTailgatingStore.getState().resetGame();
     if (onComplete) {
       onComplete();

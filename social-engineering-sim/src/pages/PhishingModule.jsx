@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import MonitorFrame from "../components/MonitorFrame";
 import { useGameStore } from "../state/useGameStore";
+import { useSurveyStore } from "../state/useSurveyStore";
 
 export default function PhishingModule({ onComplete } = {}) {
   const [started, setStarted] = useState(Boolean(onComplete));
@@ -18,6 +19,12 @@ export default function PhishingModule({ onComplete } = {}) {
 
   const handleFinish = () => {
     if (onComplete) {
+      const score = useGameStore.getState().getScore();
+      useSurveyStore.getState().snapshotMetrics({
+        correct: score.correct,
+        total: score.total,
+        percent: score.percent,
+      });
       onComplete();
     } else {
       resetGame();

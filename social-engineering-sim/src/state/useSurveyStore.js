@@ -25,24 +25,32 @@ function newSessionId() {
 */
 
 export const useSurveyStore = create((set, get) => ({
-  sessionId:  newSessionId(),
-  moduleId:   null,
-  tsStart:    null,
-  preDraft:   {},
-  postDraft:  {},
-  submitted:  [],
-  saving:     false,
-  saveError:  null,
+  sessionId:       newSessionId(),
+  moduleId:        null,
+  tsStart:         null,
+  preDraft:        {},
+  postDraft:       {},
+  moduleMetrics:   {}, // snapshot captured before game store is reset
+  submitted:       [],
+  saving:          false,
+  saveError:       null,
 
   /* Called when a module page mounts */
   beginModule: (moduleId) =>
     set({
       moduleId,
-      tsStart:   new Date().toISOString(),
-      preDraft:  {},
-      postDraft: {},
-      saveError: null,
+      tsStart:       new Date().toISOString(),
+      preDraft:      {},
+      postDraft:     {},
+      moduleMetrics: {},
+      saveError:     null,
     }),
+
+  /*
+    snapshotMetrics — call this BEFORE resetGame() so the metrics
+    are preserved even after the game store is wiped.
+  */
+  snapshotMetrics: (metrics) => set({ moduleMetrics: metrics }),
 
   /* Update a single pre-survey answer */
   setPreAnswer: (questionId, value) =>
@@ -57,8 +65,8 @@ export const useSurveyStore = create((set, get) => ({
     moduleMetrics  : object pulled from the relevant game store
                      e.g. { ending, securityRisk, socialPressure, incidents }
   */
-  submitResponse: async (moduleMetrics = {}) => {
-    const { sessionId, moduleId, tsStart, preDraft, postDraft } = get();
+  submitResponse: async () => {
+    const { sessionId, moduleId, tsStart, preDraft, postDraft, moduleMetrics } = get();
 
     set({ saving: true, saveError: null });
 

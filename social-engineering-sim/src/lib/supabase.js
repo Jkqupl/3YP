@@ -1,14 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 
-/*
-  These values are safe to expose in frontend code.
-  The table uses Row Level Security (RLS) — see the SQL setup below.
-  The anon key can only INSERT to survey_responses; it cannot read or delete.
-
-  Set these in your .env file:
-    VITE_SUPABASE_URL=https://xxxx.supabase.co
-    VITE_SUPABASE_ANON_KEY=eyJ...
-*/
 const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey  = import.meta.env.VITE_SUPABASE_ANON_KEY;
 

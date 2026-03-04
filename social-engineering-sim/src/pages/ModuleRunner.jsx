@@ -8,9 +8,6 @@ import PretextingModule from "./PretextingModule";
 
 import { SURVEY_SCHEMAS } from "../data/surveySchemas";
 import { useSurveyStore } from "../state/useSurveyStore";
-import { useGameStore } from "../state/useGameStore";
-import { useTailgatingStore } from "../state/useTailgatingStore";
-import { usePretextingStore } from "../state/usePretextingStore";
 
 /*
   Steps:
@@ -22,40 +19,6 @@ import { usePretextingStore } from "../state/usePretextingStore";
 */
 
 const VALID_MODULES = ["phishing", "tailgating", "pretexting"];
-
-/* Pull relevant game metrics from the correct store */
-function getModuleMetrics(moduleId) {
-  if (moduleId === "tailgating") {
-    const s = useTailgatingStore.getState();
-    return {
-      ending: s.ending,
-      securityRisk: s.securityRisk,
-      socialPressure: s.socialPressure,
-      maxPressure: s.maxPressure,
-      breachOccurred: s.breachOccurred,
-      incidents: s.incidents,
-    };
-  }
-  if (moduleId === "pretexting") {
-    const s = usePretextingStore.getState();
-    return {
-      ending: s.computeEnding(),
-      secureRounds: s.stats.secureRounds,
-      correctVerification: s.stats.correctVerification,
-      totalRounds: s.totalRounds,
-    };
-  }
-  if (moduleId === "phishing") {
-    const s = useGameStore.getState();
-    const score = s.getScore();
-    return {
-      correct: score.correct,
-      total: score.total,
-      percent: score.percent,
-    };
-  }
-  return {};
-}
 
 export default function ModuleRunner() {
   const { moduleId } = useParams();
@@ -99,8 +62,7 @@ export default function ModuleRunner() {
   const goPostSurvey = () => setStep("postSurvey");
 
   const handleSubmit = async () => {
-    const metrics = getModuleMetrics(moduleId);
-    const ok = await submitResponse(metrics);
+    const ok = await submitResponse();
     if (ok) setStep("done");
   };
 
