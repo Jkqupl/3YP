@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import TailgatingSimulation from "../game/TailgatingSimulation";
 import { useTailgatingStore } from "../state/useTailgatingStore";
 import { useSurveyStore } from "../state/useSurveyStore";
+import DropdownItem from "../components/DropDown";
 
 const NAV_H = 48;
 const BAR_H = 2;
@@ -81,7 +82,7 @@ export default function TailgatingModule({ onComplete } = {}) {
               style={{ marginBottom: "clamp(28px,4vw,48px)" }}
             >
               <div className="section-label" style={{ marginBottom: "10px" }}>
-                // THREAT VECTOR 03
+                // THREAT VECTOR 02
               </div>
               <h1
                 style={{
@@ -244,16 +245,32 @@ export default function TailgatingModule({ onComplete } = {}) {
               </h2>
               <div className="info-card">
                 {[
-                  "Only allow access to people who can verify their authorisation — even if they look legitimate.",
-                  "Direct unverified individuals to reception or security rather than letting them through yourself.",
-                  "Don't feel pressured by urgency, politeness, or someone claiming authority.",
-                  "Be consistent — small exceptions add up and attackers rely on them.",
-                  "A moment's pause to check can prevent a serious security incident.",
+                  {
+                    title:
+                      "Only allow access to people who can verify authorisation",
+                    body: "Attackers may wear convincing uniforms or carry equipment to appear legitimate. Always confirm identity and permission before granting access.",
+                  },
+                  {
+                    title:
+                      "Direct unverified individuals to reception or security",
+                    body: "Reception staff or security teams are responsible for verifying visitors. Redirecting unknown individuals ensures proper procedures are followed.",
+                  },
+                  {
+                    title: "Do not feel pressured by urgency or authority",
+                    body: "Social engineers often pretend to be senior staff or claim emergencies to bypass procedures. Security rules apply regardless of rank or urgency.",
+                  },
+                  {
+                    title: "Be consistent with security procedures",
+                    body: "Attackers exploit small exceptions. Following the same rules every time prevents them from identifying weak points in the process.",
+                  },
+                  {
+                    title: "Take a moment to verify before allowing access",
+                    body: "A quick check can prevent unauthorised entry and protect sensitive systems or information inside the organisation.",
+                  },
                 ].map((item, i) => (
-                  <div key={i} className="checklist-item">
-                    <span className="checklist-icon">›</span>
-                    <span>{item}</span>
-                  </div>
+                  <DropdownItem key={i} title={item.title}>
+                    {item.body}
+                  </DropdownItem>
                 ))}
               </div>
               <div className="note-banner" style={{ marginTop: "14px" }}>

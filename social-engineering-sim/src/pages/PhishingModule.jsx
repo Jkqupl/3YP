@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import MonitorFrame from "../components/MonitorFrame";
 import { useGameStore } from "../state/useGameStore";
 import { useSurveyStore } from "../state/useSurveyStore";
+import DropdownItem from "../components/DropDown";
 
 export default function PhishingModule({ onComplete } = {}) {
   const [started, setStarted] = useState(Boolean(onComplete));
@@ -240,18 +241,38 @@ export default function PhishingModule({ onComplete } = {}) {
             What to do
           </h2>
           <div className="info-card">
-            {[
-              "Check the sender address and hover over links before clicking — mismatched domains are a major red flag.",
-              "Beware of urgency or fear-based language. Legitimate organisations rarely pressure users to act instantly.",
-              "Never provide passwords, full card details, or one-time passcodes through links or messages.",
-              "If unsure, go directly to the organisation's official website rather than clicking any provided link.",
-              "Enable multi-factor authentication and keep devices up to date to reduce risk.",
-            ].map((item, i) => (
-              <div key={i} className="checklist-item">
-                <span className="checklist-icon">›</span>
-                <span>{item}</span>
-              </div>
-            ))}
+            <DropdownItem title="Check the sender address and hover over links before clicking">
+              Attackers often use addresses that look almost correct but contain
+              small differences such as extra letters or unusual domains.
+              Hovering over links before clicking lets you see the real
+              destination and verify whether it matches the organisation’s
+              official website.
+            </DropdownItem>
+
+            <DropdownItem title="Be cautious of urgent or threatening language">
+              Many phishing emails try to create pressure by claiming your
+              account will be locked or that suspicious activity has been
+              detected. This urgency is designed to make you react quickly
+              instead of thinking critically.
+            </DropdownItem>
+
+            <DropdownItem title="Never provide passwords or one time passcodes">
+              Legitimate companies will never ask for your password or
+              authentication codes through email or messages. If a message asks
+              for these details, it is almost certainly a phishing attempt.
+            </DropdownItem>
+
+            <DropdownItem title="Visit websites directly instead of using email links">
+              If you receive a message about an account issue or payment
+              problem, open a new browser tab and navigate to the official
+              website yourself rather than clicking the provided link.
+            </DropdownItem>
+
+            <DropdownItem title="Enable multi factor authentication">
+              Even if your password is stolen, multi factor authentication adds
+              an extra security step that can prevent attackers from accessing
+              your account.
+            </DropdownItem>
           </div>
         </section>
 

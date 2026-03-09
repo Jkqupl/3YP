@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import PretextingBuilder from "../components/pretexting/PretextingBuilder";
 import { usePretextingStore } from "../state/usePretextingStore";
 import { useSurveyStore } from "../state/useSurveyStore";
+import DropdownItem from "../components/DropDown";
 
 export default function PretextingModule({ onComplete } = {}) {
   const [started, setStarted] = useState(false);
@@ -63,7 +64,7 @@ export default function PretextingModule({ onComplete } = {}) {
             style={{ marginBottom: "clamp(28px,4vw,48px)" }}
           >
             <div className="section-label" style={{ marginBottom: "10px" }}>
-              // THREAT VECTOR 02
+              // THREAT VECTOR 03
             </div>
             <h1
               style={{
@@ -229,16 +230,30 @@ export default function PretextingModule({ onComplete } = {}) {
             </h2>
             <div className="info-card">
               {[
-                "Stop and think before giving sensitive information to anyone, even if their story sounds convincing.",
-                "Never share passwords, one-time passcodes, or personal info just because someone asks.",
-                "Use a trusted method to verify the request — official contact details, not anything they give you.",
-                "Check with a colleague or supervisor if you're unsure about an unusual request.",
-                "Report suspicious calls or messages to Action Fraud so patterns can be identified.",
+                {
+                  title: "Stop and think before giving sensitive information",
+                  body: "Attackers rely on urgency and emotional pressure. Pausing for a moment to question the request can often reveal inconsistencies or warning signs.",
+                },
+                {
+                  title: "Never share passwords or one time passcodes",
+                  body: "Legitimate organisations and IT teams will never ask for passwords or authentication codes directly. Sharing them allows attackers immediate access to accounts.",
+                },
+                {
+                  title: "Verify requests using trusted contact details",
+                  body: "Always confirm requests through official company contact information or internal directories rather than using numbers or links provided in the message.",
+                },
+                {
+                  title: "Check with a colleague or supervisor",
+                  body: "If something feels unusual, asking a colleague can provide a second opinion. Social engineering attacks often rely on isolating the target.",
+                },
+                {
+                  title: "Report suspicious calls or messages to Action Fraud",
+                  body: "Reporting helps authorities identify patterns and prevent further attacks against organisations and individuals.",
+                },
               ].map((item, i) => (
-                <div key={i} className="checklist-item">
-                  <span className="checklist-icon">›</span>
-                  <span>{item}</span>
-                </div>
+                <DropdownItem key={i} title={item.title}>
+                  {item.body}
+                </DropdownItem>
               ))}
             </div>
           </section>

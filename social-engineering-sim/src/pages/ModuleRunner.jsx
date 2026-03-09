@@ -50,7 +50,7 @@ export default function ModuleRunner() {
   useEffect(() => {
     if (VALID_MODULES.includes(moduleId)) {
       beginModule(moduleId);
-      setStep("preSurvey");
+      setStep("playing"); // skip pre-survey for now to encourage people to play multiple modules. setStep("preSurvey");
     }
   }, [moduleId]); // intentionally only re-runs if moduleId changes
 
@@ -59,7 +59,7 @@ export default function ModuleRunner() {
 
   /* ── Navigation ── */
   const goPlaying = () => setStep("playing");
-  const goPostSurvey = () => setStep("postSurvey");
+  const goPostSurvey = () => setStep("done"); // skip post-survey for now, since we don't have much data yet and want to encourage people to play multiple modules. setStep("postSurvey");
 
   const handleSubmit = async () => {
     const ok = await submitResponse();
