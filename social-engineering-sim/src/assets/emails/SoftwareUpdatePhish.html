@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Software Update Available</title>
+  <style>
+    body { margin:0;padding:0;background:#1a1a2e;font-family:'Segoe UI',Arial,sans-serif;color:#333; }
+    .wrap { width:100%;padding:24px 12px;box-sizing:border-box; }
+    .card { width:600px;max-width:100%;margin:0 auto;background:#fff; }
+    .header { background:#1a1a2e;padding:22px 30px;text-align:center; }
+    .logo-text { color:#00d4ff;font-size:20px;font-weight:700;letter-spacing:0.08em;margin:0; }
+    .logo-sub { color:#7a8ba0;font-size:11px;margin:4px 0 0;letter-spacing:0.1em; }
+    .content { padding:30px 30px 24px; }
+    .update-badge {
+      display:inline-block;background:#e8f4fd;color:#0277bd;
+      font-size:11px;font-weight:700;letter-spacing:0.08em;
+      padding:4px 12px;border-radius:2px;margin-bottom:16px;
+      text-transform:uppercase;
+    }
+    h1 { margin:0 0 12px;font-size:20px;font-weight:700;color:#111; }
+    p { margin:0 0 14px;font-size:14px;line-height:22px;color:#555; }
+    .version-row {
+      display:flex;justify-content:space-between;align-items:center;
+      background:#f8f9fa;border:1px solid #e9ecef;border-radius:4px;
+      padding:12px 16px;margin:18px 0;font-size:13px;
+    }
+    .version-label { color:#888; }
+    .version-new { color:#111;font-weight:700; }
+    .changelog {
+      background:#f8f9fa;border-left:3px solid #00d4ff;
+      padding:12px 16px;margin:18px 0;
+    }
+    .changelog ul { margin:6px 0 0;padding-left:18px;font-size:13px;color:#555;line-height:22px; }
+    .btn-row { text-align:center;margin:24px 0 8px; }
+    .btn {
+      display:inline-block;background:#0066ff;color:#fff;text-decoration:none;
+      font-size:15px;padding:12px 36px;border-radius:5px;font-weight:700;
+      letter-spacing:0.02em;
+    }
+    .file-info { text-align:center;font-size:12px;color:#aaa;margin-top:8px; }
+    .footer { border-top:1px solid #eee;padding:16px 30px;font-size:11px;color:#bbb;text-align:center; }
+    .footer a { color:#bbb;text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <p class="logo-text">NEXUS<span style="color:#fff">DRIVE</span></p>
+        <p class="logo-sub">CLOUD STORAGE &amp; SYNC</p>
+      </div>
+      <div class="content">
+        <span class="update-badge">Update Available</span>
+        <h1>A new version of NexusDrive is ready</h1>
+        <p>
+          Hi, your NexusDrive desktop client is out of date. Version 4.2.1 includes critical
+          security patches and performance improvements. We recommend updating immediately.
+        </p>
+
+        <div class="version-row">
+          <span class="version-label">Your current version</span>
+          <span>3.9.4</span>
+          <span class="version-label">Latest version</span>
+          <span class="version-new">4.2.1 ✦</span>
+        </div>
+
+        <div class="changelog">
+          <strong style="font-size:13px;">What's new in 4.2.1</strong>
+          <ul>
+            <li>Critical fix for file sync corruption bug</li>
+            <li>Improved encryption for shared folders</li>
+            <li>Performance improvements on Windows 11</li>
+            <li>Background process memory leak resolved</li>
+          </ul>
+        </div>
+
+        <div class="btn-row">
+          <a class="btn" href="http://nexusdrive-update.net/download/NexusDrive_4.2.1_setup.exe" target="_blank" rel="noopener noreferrer">
+            Download Update
+          </a>
+        </div>
+        <p class="file-info">NexusDrive_4.2.1_setup.exe &nbsp;·&nbsp; 47.3 MB &nbsp;·&nbsp; Windows</p>
+      </div>
+      <div class="footer">
+        NexusDrive Inc &nbsp;·&nbsp;
+        <a href="">Help Centre</a> &nbsp;·&nbsp;
+        <a href="">Unsubscribe</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your parcel is on its way</title>
+  <style>
+    body { margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#333; }
+    .wrap { width:100%;padding:24px 12px;box-sizing:border-box; }
+    .card { width:600px;max-width:100%;margin:0 auto;background:#fff; }
+    .header { background:#cc0000;padding:16px 24px;display:flex;align-items:center; }
+    .header-logo { color:#fff;font-size:24px;font-weight:900;letter-spacing:-0.02em;margin:0; }
+    .header-sub { color:#ffaaaa;font-size:11px;margin:2px 0 0; }
+    .status-bar { background:#f9f1e0;padding:16px 24px;border-bottom:1px solid #e8d9b8; }
+    .status-label { font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px; }
+    .status-value { font-size:16px;font-weight:700;color:#cc0000;margin:0; }
+    .content { padding:28px 24px; }
+    p { margin:0 0 14px;font-size:14px;line-height:22px;color:#444; }
+    .tracking-box {
+      background:#fff8f0;border:1px solid #f0d9b8;border-radius:4px;
+      padding:16px 20px;margin:18px 0;
+    }
+    .tracking-row { display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px; }
+    .tracking-row:last-child { margin-bottom:0; }
+    .tracking-key { color:#888; }
+    .tracking-val { font-weight:600;color:#222; }
+    .steps { margin:20px 0;padding:0;list-style:none; }
+    .steps li { display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;font-size:13px;color:#555; }
+    .step-dot { width:12px;height:12px;border-radius:50%;background:#cc0000;flex-shrink:0;margin-top:3px; }
+    .step-dot.done { background:#cc0000; }
+    .step-dot.pending { background:#ddd; }
+    .btn {
+      display:inline-block;background:#cc0000;color:#fff;text-decoration:none;
+      font-size:14px;padding:10px 26px;border-radius:4px;font-weight:700;margin:8px 0;
+    }
+    .footer { border-top:1px solid #eee;padding:16px 24px;font-size:11px;color:#bbb; }
+    .footer a { color:#bbb;text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <div>
+          <p class="header-logo">SwiftPost</p>
+          <p class="header-sub">TRACKED DELIVERY</p>
+        </div>
+      </div>
+      <div class="status-bar">
+        <p class="status-label">Delivery Status</p>
+        <p class="status-value">Out for delivery today</p>
+      </div>
+      <div class="content">
+        <p>Hi,</p>
+        <p>Your parcel is with our courier and will be delivered today between <strong>10:00 – 14:00</strong>.</p>
+
+        <div class="tracking-box">
+          <div class="tracking-row">
+            <span class="tracking-key">Tracking number</span>
+            <span class="tracking-val">SWP-8841-0293-GB</span>
+          </div>
+          <div class="tracking-row">
+            <span class="tracking-key">From</span>
+            <span class="tracking-val">TechGadgets Ltd</span>
+          </div>
+          <div class="tracking-row">
+            <span class="tracking-key">Estimated delivery</span>
+            <span class="tracking-val">Today, by 14:00</span>
+          </div>
+        </div>
+
+        <ul class="steps">
+          <li><span class="step-dot done"></span><span><strong>Parcel collected</strong> — Yesterday, 18:42</span></li>
+          <li><span class="step-dot done"></span><span><strong>Arrived at sorting hub</strong> — Today, 04:11</span></li>
+          <li><span class="step-dot done"></span><span><strong>Out for delivery</strong> — Today, 08:30</span></li>
+          <li><span class="step-dot pending"></span><span style="color:#bbb"><strong>Delivered</strong> — Pending</span></li>
+        </ul>
+
+        <a class="btn" href="https://track.swiftpost.co.uk/SWP-8841-0293-GB" target="_blank" rel="noopener noreferrer">
+          Track Your Parcel
+        </a>
+      </div>
+      <div class="footer">
+        SwiftPost &nbsp;·&nbsp;
+        <a href="">Help</a> &nbsp;·&nbsp;
+        <a href="">Privacy Policy</a> &nbsp;·&nbsp;
+        <a href="">Unsubscribe</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

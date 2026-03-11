@@ -114,7 +114,7 @@ export default function EmailPanel({ mobile = false, onBack }) {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+      <div className="flex flex-col gap-2">
         <div className="min-w-0">
           <div className="text-slate-100 font-semibold truncate">
             {email.subject}
@@ -128,34 +128,32 @@ export default function EmailPanel({ mobile = false, onBack }) {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-start gap-2">
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleDecision("phish")}
-              className={[
-                "w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
-                "border shadow-sm active:scale-95",
-                decision === "phish"
-                  ? "bg-red-600 text-white border-red-300 ring-2 ring-red-300 ring-offset-2 ring-offset-slate-950"
-                  : "bg-red-500/90 text-white border-red-500 hover:bg-red-500",
-              ].join(" ")}
-            >
-              {decision === "phish" ? "✓ Malicious" : "Malicious"}
-            </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleDecision("phish")}
+            className={[
+              "px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
+              "border shadow-sm active:scale-95",
+              decision === "phish"
+                ? "bg-red-600 text-white border-red-300 ring-2 ring-red-300 ring-offset-2 ring-offset-slate-950"
+                : "bg-red-500/90 text-white border-red-500 hover:bg-red-500",
+            ].join(" ")}
+          >
+            {decision === "phish" ? "✓ Malicious" : "Malicious"}
+          </button>
 
-            <button
-              onClick={() => handleDecision("real")}
-              className={[
-                "w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
-                "border shadow-sm active:scale-95",
-                decision === "real"
-                  ? "bg-green-600 text-white border-green-300 ring-2 ring-green-300 ring-offset-2 ring-offset-slate-950"
-                  : "bg-green-500/90 text-white border-green-500 hover:bg-green-500",
-              ].join(" ")}
-            >
-              {decision === "real" ? "✓ Safe" : "Safe"}
-            </button>
-          </div>
+          <button
+            onClick={() => handleDecision("real")}
+            className={[
+              "px-4 py-2 rounded-lg text-sm font-semibold transition select-none",
+              "border shadow-sm active:scale-95",
+              decision === "real"
+                ? "bg-green-600 text-white border-green-300 ring-2 ring-green-300 ring-offset-2 ring-offset-slate-950"
+                : "bg-green-500/90 text-white border-green-500 hover:bg-green-500",
+            ].join(" ")}
+          >
+            {decision === "real" ? "✓ Safe" : "Safe"}
+          </button>
         </div>
       </div>
 

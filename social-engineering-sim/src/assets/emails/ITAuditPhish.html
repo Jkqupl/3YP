@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Action Required: Security Compliance Audit</title>
+  <style>
+    body { margin:0;padding:0;background:#f0f0f0;font-family:'Segoe UI',Arial,sans-serif;color:#333; }
+    .wrap { width:100%;padding:24px 12px;box-sizing:border-box; }
+    .card { width:600px;max-width:100%;margin:0 auto;background:#fff; }
+    .header { background:#222;padding:14px 28px;display:flex;align-items:center;gap:12px; }
+    .header-icon { color:#00c8a0;font-size:20px; }
+    .header-text { color:#e8e8e8;font-size:13px;letter-spacing:0.06em;margin:0;font-weight:600; }
+    .alert-bar { background:#fff3cd;border-bottom:2px solid #ffc107;padding:10px 28px;font-size:13px;color:#856404;font-weight:600; }
+    .content { padding:28px 28px 24px; }
+    p { margin:0 0 14px;font-size:14px;line-height:22px;color:#444; }
+    .details-box {
+      background:#f8f9fa;border:1px solid #dee2e6;border-radius:4px;
+      padding:14px 18px;margin:18px 0;font-size:13px;
+    }
+    .details-row { display:flex;gap:12px;margin-bottom:7px; }
+    .details-row:last-child { margin-bottom:0; }
+    .details-key { color:#888;width:130px;flex-shrink:0; }
+    .details-val { color:#222;font-weight:600; }
+    .compliance-list { padding-left:20px;margin:12px 0;font-size:13px;color:#555;line-height:24px; }
+    .btn {
+      display:block;background:#0055cc;color:#fff;text-decoration:none;
+      font-size:15px;padding:12px 28px;border-radius:4px;font-weight:700;
+      text-align:center;margin:20px 0 8px;
+    }
+    .expiry { font-size:12px;color:#e53e3e;font-weight:700;margin:6px 0 0;text-align:center; }
+    .footer-note { font-size:12px;color:#aaa;margin-top:20px;line-height:18px;border-top:1px solid #eee;padding-top:14px; }
+    .footer { background:#f8f9fa;border-top:1px solid #e8e8e8;padding:12px 28px;font-size:11px;color:#bbb; }
+    .footer a { color:#bbb;text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <span class="header-icon">🔒</span>
+        <p class="header-text">IT SECURITY &amp; COMPLIANCE TEAM</p>
+      </div>
+      <div class="alert-bar">⚠ Action required before end of business today</div>
+      <div class="content">
+        <p>Hi,</p>
+        <p>
+          As part of our quarterly security compliance audit, we are verifying active accounts
+          across all departments. Your account has been flagged for re-verification following
+          a routine access review.
+        </p>
+        <p>
+          This is a mandatory process required under our updated IT Security Policy (ISP-2024-09).
+          Please complete the verification steps below to avoid a temporary account suspension.
+        </p>
+
+        <div class="details-box">
+          <div class="details-row"><span class="details-key">Audit reference</span><span class="details-val">ISP-AUD-2024-1194</span></div>
+          <div class="details-row"><span class="details-key">Account status</span><span class="details-val" style="color:#e53e3e;">Pending verification</span></div>
+          <div class="details-row"><span class="details-key">Department</span><span class="details-val">All Staff</span></div>
+          <div class="details-row"><span class="details-key">Deadline</span><span class="details-val">Today, 17:00</span></div>
+        </div>
+
+        <p>To complete verification you will need to:</p>
+        <ul class="compliance-list">
+          <li>Confirm your current login credentials</li>
+          <li>Verify your registered MFA device</li>
+          <li>Review and accept the updated Acceptable Use Policy</li>
+        </ul>
+
+        <a class="btn" href="http://it-compliance-portal.systems/audit/verify?ref=ISP-AUD-2024-1194" target="_blank" rel="noopener noreferrer">
+          Complete Verification
+        </a>
+        <p class="expiry">Access suspended if not completed by 17:00 today</p>
+
+        <p class="footer-note">
+          This message was sent from the IT Security team. For questions, contact it-security@helpdesk.internal
+          or call the IT Service Desk on ext. 2100.
+        </p>
+      </div>
+      <div class="footer">
+        IT Security &amp; Compliance &nbsp;·&nbsp;
+        <a href="">IT Portal</a> &nbsp;·&nbsp;
+        <a href="">Report Phishing</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

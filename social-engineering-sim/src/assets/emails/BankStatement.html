@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your monthly statement is ready</title>
+  <style>
+    body { margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;color:#333; }
+    .wrap { width:100%;padding:24px 12px;box-sizing:border-box; }
+    .card { width:600px;max-width:100%;margin:0 auto;background:#fff; }
+    .header { background:#1b3a5c;padding:18px 28px;display:flex;justify-content:space-between;align-items:center; }
+    .bank-name { color:#fff;font-size:18px;font-weight:700;letter-spacing:0.04em;margin:0; }
+    .bank-tag { color:#8eb4d8;font-size:11px;margin:2px 0 0; }
+    .content { padding:28px 28px 24px; }
+    p { margin:0 0 14px;font-size:14px;line-height:22px;color:#444; }
+    .statement-box {
+      background:#f7fafc;border:1px solid #d0e4f0;border-radius:4px;
+      padding:16px 20px;margin:20px 0;
+    }
+    .statement-row { display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid #e8f0f6; }
+    .statement-row:last-child { border-bottom:none;padding-top:8px;font-weight:700;font-size:14px; }
+    .statement-key { color:#666; }
+    .statement-val { color:#222; }
+    .note {
+      background:#eef6ff;border-left:3px solid #1b3a5c;
+      padding:10px 14px;font-size:13px;color:#333;margin:20px 0;line-height:20px;
+    }
+    .btn {
+      display:inline-block;background:#1b3a5c;color:#fff;text-decoration:none;
+      font-size:14px;padding:10px 26px;border-radius:4px;font-weight:700;margin:8px 0;
+    }
+    .secure-note { font-size:12px;color:#999;margin-top:16px;line-height:18px; }
+    .footer { border-top:1px solid #e8e8e8;padding:16px 28px;font-size:11px;color:#bbb; }
+    .footer a { color:#bbb;text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <div>
+          <p class="bank-name">CrestBank</p>
+          <p class="bank-tag">PERSONAL BANKING</p>
+        </div>
+      </div>
+      <div class="content">
+        <p>Hi,</p>
+        <p>Your monthly account statement is now available to view in your online banking portal.</p>
+
+        <div class="statement-box">
+          <div class="statement-row">
+            <span class="statement-key">Account</span>
+            <span class="statement-val">Current Account ···· 4821</span>
+          </div>
+          <div class="statement-row">
+            <span class="statement-key">Period</span>
+            <span class="statement-val">1 Nov – 30 Nov 2024</span>
+          </div>
+          <div class="statement-row">
+            <span class="statement-key">Transactions</span>
+            <span class="statement-val">34</span>
+          </div>
+          <div class="statement-row">
+            <span class="statement-key">Closing balance</span>
+            <span class="statement-val">£1,482.07</span>
+          </div>
+        </div>
+
+        <div class="note">
+          To view your full statement, log in to online banking at <strong>crestbank.co.uk</strong> and
+          navigate to Statements. We do not include downloadable files in emails.
+        </div>
+
+        <a class="btn" href="https://online.crestbank.co.uk/statements" target="_blank" rel="noopener noreferrer">
+          View Statement
+        </a>
+
+        <p class="secure-note">
+          CrestBank will never ask for your full PIN, password, or one-time passcode by email or phone.
+          If you received an unexpected request for these details, contact us immediately on the number
+          on the back of your card.
+        </p>
+      </div>
+      <div class="footer">
+        CrestBank plc &nbsp;·&nbsp; Authorised by the FCA &nbsp;·&nbsp;
+        <a href="">Privacy Policy</a> &nbsp;·&nbsp;
+        <a href="">Manage Preferences</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
