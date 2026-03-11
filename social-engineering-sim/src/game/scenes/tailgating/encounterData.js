@@ -61,13 +61,37 @@ export const ENCOUNTERS = [
     npcHasFob: false,
   },
   {
-    key: "advanced_attacker",
-    title: "Encounter 5: Man in a suit",
-    subtitle:
-      "Morning! I've got my keys but I left the fob upstairs. Could you let me in if that's alright?",
-    type: "decision_attacker_advanced",
-    addsPressure: true,
-    npcHasFob: false,
+  key: "cleaner_legit",
+  title: "Encounter: Cleaner",
+  subtitle: '"Morning. I clean the third floor offices."',
+  type: "decision_cleaner_legit",
+  addsPressure: false,
+  npcHasFob: true,
+  },
+  {
+  key: "delivery_driver_fake",
+  title: "Encounter: Delivery Driver",
+  subtitle: '"Delivery for Flat 6. Can you let me in quickly?"',
+  type: "decision_delivery_fake",
+  addsPressure: true,
+  npcHasFob: false,
+  },
+  {
+  key: "maintenance_questionable",
+  title: "Encounter: Maintenance Worker",
+  subtitle: '"I’m here to check the fire alarm system upstairs."',
+  type: "decision_maintenance_questionable",
+  addsPressure: false,
+  npcHasFob: false,
+  },
+  {
+  key: "advanced_attacker",
+  title: "Encounter 5: Man in a suit",
+  subtitle:
+    "Morning! I've got my keys but I left the fob upstairs. Could you let me in if that's alright?",
+  type: "decision_attacker_advanced",
+  addsPressure: true,
+  npcHasFob: false,
   },
 ];
 
@@ -230,6 +254,157 @@ export const OUTCOMES = {
       feedback: "Waiting can increase pressure. Use a clear process instead.",
     },
   },
+
+  decision_cleaner_legit: {
+  ASK_QUESTION: {
+    pressureDelta: -2,
+    riskDelta: 0,
+    response: [
+      "You: Which company are you with?",
+      "NPC: GreenClean. We do the building every Tuesday.",
+    ],
+    feedback:
+      "Asking simple questions helps confirm legitimacy without bypassing security.",
+  },
+
+  REDIRECT_FOB: {
+    pressureDelta: 3,
+    riskDelta: -1,
+    response: [
+      "You: Could you tap your fob?",
+      "NPC: Sure.",
+      "NPC: (taps fob and the door unlocks)",
+    ],
+    feedback:
+      "Even legitimate staff should authenticate using the normal access process.",
+  },
+
+  HOLD_DOOR: {
+    pressureDelta: 0,
+    riskDelta: 4,
+    response: [
+      "You: Go ahead.",
+      "NPC: Thanks.",
+      "NPC: (enters without using their fob)",
+    ],
+    feedback:
+      "Even if someone is legitimate, bypassing authentication weakens building security.",
+  },
+
+  USE_INTERCOM: {
+    pressureDelta: -4,
+    riskDelta: -2,
+    response: [
+      "You: I'll buzz reception to confirm.",
+      "Intercom: Yes, the cleaner is scheduled.",
+      "NPC: Cheers.",
+    ],
+    feedback:
+      "Verification through official channels reduces uncertainty.",
+    terminal: true,
+  },
+},
+
+decision_delivery_fake: {
+  ASK_QUESTION: {
+    pressureDelta: 3,
+    riskDelta: 0,
+    response: [
+      "You: Which flat?",
+      "NPC: Uh... Flat 6.",
+    ],
+    feedback:
+      "Attackers often give vague answers when questioned.",
+  },
+
+  REDIRECT_FOB: {
+    pressureDelta: 4,
+    riskDelta: 0,
+    response: [
+      "You: Please use the intercom or contact the resident.",
+      "NPC: Can't you just let me in quickly?",
+    ],
+    feedback:
+      "Deliveries should go through the resident or intercom process.",
+  },
+
+  HOLD_DOOR: {
+    pressureDelta: 0,
+    riskDelta: 0,
+    response: [
+      "You: Go on.",
+      "NPC: Cheers.",
+      "NPC: (walks in carrying the parcel)",
+    ],
+    feedback:
+      "Delivery stories are a common tailgating tactic.",
+    fail: true,
+    terminal: true,
+  },
+
+  USE_INTERCOM: {
+    pressureDelta: -3,
+    riskDelta: 0,
+    response: [
+      "You: I'll buzz Flat 6.",
+      "Intercom: No answer.",
+      "NPC: Forget it then.",
+      "NPC: (walks away)",
+    ],
+    feedback:
+      "Using the intercom prevents unauthorised access.",
+    terminal: true,
+  },
+},
+decision_maintenance_questionable: {
+  ASK_QUESTION: {
+    pressureDelta: 2,
+    riskDelta: 0,
+    response: [
+      "You: Which company are you from?",
+      "NPC: Facilities maintenance.",
+    ],
+    feedback:
+      "Authority claims should still be verified.",
+  },
+
+  REDIRECT_FOB: {
+    pressureDelta: 5,
+    riskDelta: 0,
+    response: [
+      "You: Please tap your fob.",
+      "NPC: I don't have one.",
+      "NPC: I'm just here to check the alarms.",
+    ],
+    feedback:
+      "Contractors should have authorised access or be verified.",
+  },
+
+  HOLD_DOOR: {
+    pressureDelta: 0,
+    riskDelta: 8,
+    response: [
+      "You: Go on.",
+      "NPC: Thanks.",
+      "NPC: (enters without authenticating)",
+    ],
+    feedback:
+      "Allowing entry without verification exposes the building to risk.",
+  },
+
+  USE_INTERCOM: {
+    pressureDelta: -4,
+    riskDelta: 0,
+    response: [
+      "You: I'll contact building management.",
+      "NPC: Actually, I'll come back later.",
+      "NPC: (leaves)",
+    ],
+    feedback:
+      "Verifying with building management prevents unauthorised contractor access.",
+    terminal: true,
+  },
+},
 
   decision_attacker_clear: {
     LET_IN: {
@@ -444,6 +619,62 @@ export const VERDICTS = {
       text: "Mostly right. You did not grant access, but verification is stronger than waiting.",
     },
   },
+  decision_cleaner_legit: {
+  HOLD_DOOR: {
+    ok: false,
+    text: "Not ideal. Even legitimate staff should authenticate using their access credentials.",
+  },
+  REDIRECT_FOB: {
+    ok: true,
+    text: "Correct. You ensured the cleaner authenticated properly.",
+  },
+  USE_INTERCOM: {
+    ok: true,
+    text: "Correct. You verified the cleaner through an official channel.",
+  },
+  ASK_QUESTION: {
+    ok: true,
+    text: "Mostly right. Asking questions helps confirm legitimacy before allowing access.",
+  },
+},
+
+decision_delivery_fake: {
+  HOLD_DOOR: {
+    ok: false,
+    text: "Not ideal. Delivery stories are frequently used in tailgating attempts.",
+  },
+  USE_INTERCOM: {
+    ok: true,
+    text: "Correct. Deliveries should go through the resident or intercom process.",
+  },
+  REDIRECT_FOB: {
+    ok: true,
+    text: "Correct. You redirected them to the proper access process.",
+  },
+  ASK_QUESTION: {
+    ok: true,
+    text: "Mostly right. Questioning can expose inconsistencies.",
+  },
+},
+
+decision_maintenance_questionable: {
+  HOLD_DOOR: {
+    ok: false,
+    text: "Not ideal. Contractors should always be verified before access.",
+  },
+  USE_INTERCOM: {
+    ok: true,
+    text: "Correct. Verifying with management prevents unauthorised contractor access.",
+  },
+  REDIRECT_FOB: {
+    ok: true,
+    text: "Correct. You required authentication rather than trusting their claim.",
+  },
+  ASK_QUESTION: {
+    ok: true,
+    text: "Mostly right. Authority claims should still be verified.",
+  },
+},
 };
 
 /**
@@ -481,6 +712,26 @@ export const INITIAL_CHOICES = {
     { label: "Redirect to key fob", actionKey: "REDIRECT_FOB" },
     { label: "Hold door open", actionKey: "HOLD_DOOR" },
   ],
+  decision_cleaner_legit: [
+  { label: "Ask a brief question", actionKey: "ASK_QUESTION" },
+  { label: "Use intercom", actionKey: "USE_INTERCOM" },
+  { label: "Point to key fob reader", actionKey: "REDIRECT_FOB" },
+  { label: "Hold door open", actionKey: "HOLD_DOOR" },
+],
+
+decision_delivery_fake: [
+  { label: "Ask a question", actionKey: "ASK_QUESTION" },
+  { label: "Use intercom", actionKey: "USE_INTERCOM" },
+  { label: "Redirect to resident/intercom", actionKey: "REDIRECT_FOB" },
+  { label: "Hold door open", actionKey: "HOLD_DOOR" },
+],
+
+decision_maintenance_questionable: [
+  { label: "Ask a question", actionKey: "ASK_QUESTION" },
+  { label: "Use intercom", actionKey: "USE_INTERCOM" },
+  { label: "Redirect to key fob", actionKey: "REDIRECT_FOB" },
+  { label: "Hold door open", actionKey: "HOLD_DOOR" },
+],
 };
 
 /** Choices shown after an initial gather action (phase 2). */

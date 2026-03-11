@@ -5,7 +5,7 @@ const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 export const useTailgatingStore = create((set, get) => ({
   // Progress
   encounterIndex: 0,
-  totalEncounters: 5,
+  totalEncounters: 8,
 
   // Meters
   socialPressure: 0,
